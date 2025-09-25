@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>46系圆柱电池焊接工艺分析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard. The structure is now focused on a powerful, filterable, and searchable data table as the core component. This allows users to deeply explore and compare specific company processes. Clicking a table row reveals more detailed information in a modal, enabling a drill-down workflow. This structure was chosen because it caters to both high-level analysis and detailed investigation, making a complex dataset easily consumable and explorable for an expert user, prioritizing data density and direct comparison. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Detailed 9-column comparison data for each company. Goal: Organize/Compare/Explore. Viz Method: Interactive HTML Table. Interaction: Filtering by company/method, text search, sorting, and drill-down to a modal. Justification: This is the most effective way to present structured, multi-faceted data, and interactivity makes it a powerful research tool. Method: HTML/Tailwind/JS.
+    - Report Info: In-depth qualitative notes for each entry. Goal: Inform (details). Viz Method: Modal Window. Interaction: Triggered by click. Justification: Keeps the main table clean while providing access to deeper insights on demand. Method: HTML/Tailwind/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei';
+            background-color: #FDFBF8;
+            color: #333;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.5rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .btn-primary {
+            color: #fff;
+            background-color: #8A6E59;
+            border-color: #8A6E59;
+        }
+        .btn-primary:hover {
+            background-color: #755b4a;
+            border-color: #755b4a;
+        }
+        .table-header {
+            background-color: #F3F0EC;
+            font-weight: 600;
+            color: #5a4b3e;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#5a4b3e]">46系圆柱电池焊接工艺分析平台</h1>
+            <p class="mt-2 text-lg text-gray-600">深入洞察主流厂商与供应商的电芯制造焊接技术</p>
+        </header>
+
+        <main>
+            <!-- Interactive Table Section -->
+            <section id="interactive-table">
+                 <div class="text-left mb-6">
+                     <h2 class="text-2xl font-semibold text-[#5a4b3e]">详细数据浏览器</h2>
+                     <p class="text-gray-500 mt-1">通过下方的筛选器和搜索框，您可以精确查找特定公司或技术的详细工艺信息。点击“查看详情”可获取更深入的分析。</p>
+                </div>
+                <div class="card p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="searchInput" placeholder="搜索关键词..." class="md:col-span-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8A6E59]">
+                        <select id="companyFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8A6E59]">
+                            <option value="">所有厂商</option>
+                        </select>
+                        <select id="weldingFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8A6E59]">
+                            <option value="">所有焊接方式</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto card">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs uppercase table-header">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">电池厂/整车厂</th>
+                                <th scope="col" class="px-6 py-3">电芯型号</th>
+                                <th scope="col" class="px-6 py-3">焊接激光器选型</th>
+                                <th scope="col" class="px-6 py-3">炸点优化方式</th>
+                                <th scope="col" class="px-6 py-3">焊接方式</th>
+                                <th scope="col" class="px-6 py-3">热影响区优化</th>
+                                <th scope="col" class="px-6 py-3">焊接材质</th>
+                                <th scope="col" class="px-6 py-3">焊接评价方式</th>
+                                <th scope="col" class="px-6 py-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table">
+                            <!-- Data rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="details-modal" class="modal-backdrop hidden">
+        <div class="modal-content relative">
+            <button id="close-modal" class="absolute top-4 right-6 text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            <h2 id="modal-title" class="text-2xl font-bold mb-4 text-[#5a4b3e]">详情</h2>
+            <div id="modal-body" class="space-y-4">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = [
+            {
+                company: 'TESLA',
+                model: '4680',
+                laser: 'IPG 高功率光纤激光器',
+                spatter_opt: '无极耳设计，电流路径优化，减少产热',
+                welding_method: '顶部/底部连续激光焊',
+                haz_opt: '高速焊接，能量集中控制，优化光斑形状',
+                material: '铜/铝',
+                evaluation: '在线红外监测，X-Ray无损探伤，电阻测试',
+                details: '特斯拉的4680无极耳（Tabless）设计是颠覆性的，它将传统的极耳焊接转变为在集流盘与壳体间的环形区域进行连续焊接。这种方式大幅降低了内阻，但对焊接速度、精度和一致性提出了极高要求。他们采用高速振镜扫描和功率调制技术，以最小化热输入，防止对内部电化学体系造成损伤。'
+            },
+            {
+                company: '亿纬锂能 (EVE)',
+                model: '4695',
+                laser: '通快/IPG 环形光斑/可变光斑激光器',
+                spatter_opt: '环形光斑预热，中心光斑熔深，优化保护气体流场',
+                welding_method: 'CCS/Busbar激光焊',
+                haz_opt: '复合焊接（蓝光+红外），脉冲整形',
+                material: '镀镍钢/铝合金',
+                evaluation: 'AOI视觉检测，焊接熔深金相分析，气密性测试',
+                details: '亿纬锂能在46系列大圆柱上技术积累深厚。他们倾向于使用先进的环形光斑或可变光斑激光器，这种技术能更好地控制熔池形态，外部环形光斑用于预热和稳定熔池，中心光斑负责熔深，有效抑制了因杂质、镀层等因素引起的焊接飞溅（炸点），提高了良率。'
+            },
+            {
+                company: 'CATL (宁德时代)',
+                model: '4680 (麒麟电池兼容)',
+                laser: '锐科/创鑫 高功率MOPA激光器',
+                spatter_opt: 'Wobble焊接（摆动头），真空环境焊接探索',
+                welding_method: '顶盖防爆阀激光焊',
+                haz_opt: '能量密度精确控制，纳秒级脉冲调制',
+                material: '铝合金/不锈钢',
+                evaluation: '焊接过程等离子体/声学信号监测，推拉力测试',
+                details: 'CATL虽然以方形电池著称，但在大圆柱领域同样布局深远。其方案更侧重于极致的成本控制与生产效率。采用Wobble焊接技术，即让激光束进行高频摆动，可以增大焊接作用面积，提高对装配间隙的容忍度，同时有效搅拌熔池，排出气体，减少气孔和飞溅。'
+            },
+            {
+                company: '比亚迪 (BYD)',
+                model: '46XX (技术储备)',
+                laser: '自研/联赢激光 光纤激光器',
+                spatter_opt: '优化夹具设计，精确控制压紧力',
+                welding_method: '极柱超声波焊+壳体密封焊',
+                haz_opt: '超声波能量匹配，优化焊头设计',
+                material: '铜/铝/钢',
+                evaluation: '焊接后电阻一致性测试，超声波C-Scan',
+                details: '比亚迪在圆柱领域有技术储备，但其核心优势在于刀片电池。若其进入46系，可能会结合其成熟的制造经验，在某些环节（如极柱焊接）采用超声波焊等非熔焊技术，以避免热损伤。激光主要用于壳体密封焊等关键部位，强调可靠性与成本平衡。'
+            },
+            {
+                company: '正力新能 (ZENERGY)',
+                model: '4680/4695',
+                laser: 'IPG/Coherent AMR可变环形光斑激光器',
+                spatter_opt: '同步送丝/填粉，优化材料成分',
+                welding_method: '盖组/极柱激光填丝焊',
+                haz_opt: '光束整形技术，实时功率闭环控制',
+                material: '铝硅合金焊丝/镀镍钢',
+                evaluation: '在线熔深监测（OCT），3D形貌扫描',
+                details: '作为新兴力量，正力新能直接对标行业最高标准。采用激光填丝焊是一种先进工艺，通过在焊接过程中同步填充金属丝，可以有效桥接缝隙，调整焊缝的化学成分，从而改善其机械性能和抗裂性，特别适用于对密封性和强度要求极高的应用场景。'
+            },
+            {
+                company: '比克 (BAK)',
+                model: '4680',
+                laser: '大族激光/华工激光 单模光纤激光器',
+                spatter_opt: '工艺参数优化（离焦量，功率曲线）',
+                welding_method: '传统脉冲/连续激光点焊/缝焊',
+                haz_opt: '小光斑，高峰值功率，短脉冲宽度',
+                material: '镀镍钢带/铝带',
+                evaluation: '首件金相切片分析，批量X-Ray抽检',
+                details: '比克作为国内老牌圆柱电池企业，其方案更侧重于成熟工艺的精细化控制。通过对海量生产数据的分析，建立了完善的工艺参数数据库，能够在传统设备上通过精密的功率、速度、离焦量匹配，实现稳定且低成本的焊接，是大规模成熟制造的典范。'
+            },
+            {
+                company: '蜂巢能源 (SVOLT)',
+                model: '4680 (短刀技术延伸)',
+                laser: '长光华芯 蓝光激光器',
+                spatter_opt: '蓝光对铜吸收率高，减少热量冗余',
+                welding_method: '蓝光激光复合焊',
+                haz_opt: '“热输入”极低，对铜材料焊接质量高',
+                material: '纯铜/铜合金',
+                evaluation: '焊后电性能测试，红外热成像分析',
+                details: '蜂巢能源在利用其“短刀”技术平台优势的同时，探索前沿焊接技术。蓝光激光器是其一大特色，由于铜材料对蓝光波段的吸收率远高于传统的红外激光，因此可以在更低的功率下实现高效、稳定的焊接，几乎无飞溅，特别适用于铜极柱等部位的焊接。'
+            },
+            {
+                company: '远景动力 (AESC)',
+                model: '46XX 系列',
+                laser: '恩耐(nLIGHT) 可调环形激光器',
+                spatter_opt: 'AFX技术，精确控制中心与环形光斑能量配比',
+                welding_method: 'CCS与壳体连接激光焊',
+                haz_opt: '实时调整光束模式，适应不同焊接阶段需求',
+                material: '铝合金',
+                evaluation: '在线视觉与焊接参数协同监控，破坏性物理测试',
+                details: '远景动力注重全球供应链的整合与技术领先。其采用的nLIGHT激光器具有灵活的光束调节能力，可以在焊接过程中动态改变光斑形态。例如，在焊接起始阶段使用环形光斑预热，在熔深阶段加强中心光斑能量，在结束阶段逐渐减弱，实现对整个焊接过程的“全时域”精确控制。'
+            },
+             {
+                company: '先导智能 (LEAD)',
+                type: '供应商',
+                laser: '集成主流品牌(IPG, 通快等)',
+                spatter_opt: '提供集成视觉系统的Wobble摆动头方案',
+                welding_method: '整线解决方案，覆盖卷绕到焊接所有工序',
+                haz_opt: '高速高精度运动平台，配合激光器实现精确控制',
+                material: '兼容客户指定材料',
+                evaluation: '提供与MES系统联动的在线检测模块 (AOI, X-Ray)',
+                details: '作为全球领先的锂电设备供应商，先导智能提供的是高度集成的整线解决方案。他们不生产激光器，但深刻理解焊接工艺，能够将最合适的激光器、振镜、运动平台和检测系统整合成高效、稳定的自动化产线，其核心竞争力在于系统集成能力和工艺know-how。'
+            },
+             {
+                company: '赢合科技 (YINGHE)',
+                type: '供应商',
+                laser: '集成锐科、创鑫等国产品牌',
+                spatter_opt: '高性价比的振镜扫描方案，优化气体保护系统',
+                welding_method: '模块化的焊接工作站',
+                haz_opt: 'PLC控制系统，实现焊接参数的快速调用和切换',
+                material: '兼容客户指定材料',
+                evaluation: '提供CCD视觉定位与焊后检测单元',
+                details: '赢合科技在国内市场占据重要地位，其方案特点是高性价比和快速响应。他们擅长将成熟的国产激光器和控制单元整合成模块化的焊接设备，能够为客户提供满足基本性能要求且成本可控的解决方案，是大规模扩产阶段的重要合作伙伴。'
+            }
+        ];
+
+        const renderTable = (filteredData) => {
+            const tableBody = document.getElementById('data-table');
+            tableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center p-8 text-gray-500">未找到匹配项</td></tr>`;
+                return;
+            }
+            filteredData.forEach((item) => {
+                const originalIndex = data.indexOf(item);
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-[#F3F0EC]';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${item.company} ${item.type === '供应商' ? '<span class="text-xs text-white bg-[#8A6E59] rounded-full px-2 py-0.5 ml-1">供应商</span>':''}</td>
+                    <td class="px-6 py-4">${item.model || 'N/A'}</td>
+                    <td class="px-6 py-4">${item.laser}</td>
+                    <td class="px-6 py-4">${item.spatter_opt}</td>
+                    <td class="px-6 py-4">${item.welding_method}</td>
+                    <td class="px-6 py-4">${item.haz_opt}</td>
+                    <td class="px-6 py-4">${item.material}</td>
+                    <td class="px-6 py-4">${item.evaluation}</td>
+                    <td class="px-6 py-4">
+                        <button class="view-details-btn btn btn-primary btn-sm" data-index="${originalIndex}">查看详情</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            document.querySelectorAll('.view-details-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.dataset.index;
+                    showModal(data[index]);
+                });
+            });
+        };
+        
+        const showModal = (item) => {
+            document.getElementById('modal-title').innerText = `${item.company} - 焊接工艺详情`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div><strong>电芯型号:</strong> <span class="text-gray-700">${item.model || 'N/A'}</span></div>
+                    <div><strong>焊接方式:</strong> <span class="text-gray-700">${item.welding_method}</span></div>
+                    <div><strong>激光器选型:</strong> <span class="text-gray-700">${item.laser}</span></div>
+                    <div><strong>焊接材质:</strong> <span class="text-gray-700">${item.material}</span></div>
+                </div>
+                <div class="mt-4">
+                    <p><strong>炸点优化方式:</strong></p>
+                    <p class="text-gray-700 p-2 bg-gray-50 rounded">${item.spatter_opt}</p>
+                </div>
+                <div class="mt-4">
+                    <p><strong>热影响区优化:</strong></p>
+                    <p class="text-gray-700 p-2 bg-gray-50 rounded">${item.haz_opt}</p>
+                </div>
+                 <div class="mt-4">
+                    <p><strong>焊接评价方式:</strong></p>
+                    <p class="text-gray-700 p-2 bg-gray-50 rounded">${item.evaluation}</p>
+                </div>
+                <div class="mt-6 border-t pt-4">
+                    <p class="font-semibold">分析与备注:</p>
+                    <p class="text-gray-700 mt-2">${item.details}</p>
+                </div>
+            `;
+            document.getElementById('details-modal').classList.remove('hidden');
+        };
+
+        const filterData = () => {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const companyTerm = document.getElementById('companyFilter').value;
+            const weldingTerm = document.getElementById('weldingFilter').value;
+
+            const filteredData = data.filter(item => {
+                const matchesSearch = Object.values(item).some(val =>
+                    String(val).toLowerCase().includes(searchTerm)
+                );
+                const matchesCompany = companyTerm ? item.company === companyTerm : true;
+                const matchesWelding = weldingTerm ? item.welding_method === weldingTerm : true;
+
+                return matchesSearch && matchesCompany && matchesWelding;
+            });
+
+            renderTable(filteredData);
+        };
+
+        const populateFilters = () => {
+            const companyFilter = document.getElementById('companyFilter');
+            const weldingFilter = document.getElementById('weldingFilter');
+
+            const companies = [...new Set(data.map(item => item.company))];
+            companies.sort().forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            const weldingMethods = [...new Set(data.map(item => item.welding_method))];
+            weldingMethods.sort().forEach(method => {
+                const option = document.createElement('option');
+                option.value = method;
+                option.textContent = method;
+                weldingFilter.appendChild(option);
+            });
+        };
+
+        document.getElementById('searchInput').addEventListener('keyup', filterData);
+        document.getElementById('companyFilter').addEventListener('change', filterData);
+        document.getElementById('weldingFilter').addEventListener('change', filterData);
+        
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('details-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('details-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'details-modal') {
+                 document.getElementById('details-modal').classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateFilters();
+            renderTable(data);
+        });
+    </script>
+</body>
+</html>
+

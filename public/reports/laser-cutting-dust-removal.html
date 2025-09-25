@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>46系列圆柱电池激光工艺洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals (Slate, Stone, Amber) -->
+    <!-- Application Structure Plan: 应用结构已调整为以一个可动态筛选的综合数据表格为核心。顶部保留了项目介绍和筛选器。用户可以通过点击筛选按钮，动态过滤表格中显示的公司，从而聚焦于特定的厂商进行对比分析。选择此结构是为了满足用户对原始数据完整、精确呈现的需求，表格是密集信息横向比较的最高效形式。 -->
+    <!-- Visualization & Content Choices: 1. 核心数据 -> 目标: 完整、结构化地展示所有厂商的技术细节以便于对比 -> 呈现方式: 响应式HTML表格 -> 交互: 按公司动态筛选行 -> 理由: 表格提供了最佳的数据密度和对齐方式，便于用户逐项比较不同公司的技术参数。取代了原有的卡片和图表，使信息呈现更直接、更传统，符合数据密集型报告的审查习惯。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #1e3a8a;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9; /* bg-slate-100 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">46系列圆柱电池激光工艺技术洞察</h1>
+            <p class="mt-2 text-lg text-slate-600">主流厂商在全极耳（无极耳）工艺中的激光应用方案对比</p>
+        </header>
+
+        <div class="mb-8 p-4 bg-white rounded-lg shadow-sm">
+            <p class="text-slate-700">
+                46系列大圆柱电池的全极耳设计是提升能量密度与快充性能的关键。该设计用整个集流盘替代传统极耳，显著降低了内阻。然而，这也对制造工艺提出了极高要求，特别是极片裁切和后续的粉尘控制。“激光切连带”技术因其高精度、低热影响和高灵活性，成为主流方案，但其产生的金属熔珠和粉尘是必须解决的核心痛点。“激光除尘”作为配套关键工序，其效率直接影响电芯的良率、安全性和循环寿命。本报告旨在以表格形式完整呈现各主流厂商的技术路径与挑战。
+            </p>
+        </div>
+        
+        <div class="mb-8">
+            <div id="filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
+            </div>
+        </div>
+
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[1200px] text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-700 uppercase">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 w-1/12">电池厂/整车厂</th>
+                            <th scope="col" class="px-4 py-3 w-1/12">电芯型号</th>
+                            <th scope="col" class="px-4 py-3 w-2/12">激光连带的原因</th>
+                            <th scope="col" class="px-4 py-3 w-3/12">激光除尘的方式</th>
+                            <th scope="col" class="px-4 py-3 w-2/12">极耳厚度和拉伸要求</th>
+                            <th scope="col" class="px-4 py-3 w-3/12">熔珠的尺寸和电性能的影响</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const techData = [
+            {
+                id: 'tesla',
+                company: 'TESLA',
+                model: '4680',
+                laser_reason: '实现干法电极的“全极耳”设计，极大降低内阻和发热，是提升能量密度和快充性能的核心。激光非接触式加工可避免刀具磨损和机械应力。',
+                dust_removal: '高功率脉冲式真空吸尘结合“风刀”吹扫。在切割区域形成负压场，瞬间吸走粉尘和熔珠，风刀进行二次清洁，确保极卷纯净度。',
+                tab_specs: '铜箔: ~60μm, 铝箔: ~70μm。要求高抗拉强度(>280MPa)和延展性(>3%)，以承受高速卷绕时的张力，防止极耳撕裂或起皱。',
+                bead_impact: '熔珠尺寸严格控制在 <10μm。熔珠过大会刺穿隔膜导致微短路，或在循环中脱落形成游离金属颗粒，严重影响电芯安全与寿命。'
+            },
+            {
+                id: 'catl',
+                company: 'CATL',
+                model: '麒麟电池 / 46xx',
+                laser_reason: '适配其CTP（电芯到电池包）技术，提升结构强度和生产效率。激光切割路径灵活，可快速迭代和优化极耳形状，以改善电流分布。',
+                dust_removal: '分区域负压吸尘与离子风扇静电消除技术。负压吸尘为主，离子风扇用于中和极片表面静电，防止细小粉尘二次吸附。',
+                tab_specs: '铜箔: ~70μm, 铝箔: ~80μm。注重材料的均匀性和表面洁净度，对来料有严格的管控标准，确保激光切割效果的一致性。',
+                bead_impact: '目标尺寸 <15μm。熔珠会增加界面接触电阻，导致局部过热点，影响大电流放电性能和长期循环下的DCR（直流内阻）稳定性。'
+            },
+            {
+                id: 'byd',
+                company: '比亚迪',
+                model: '46xx (规划中)',
+                laser_reason: '技术储备与下一代高性能电池布局。激光切割可兼容其未来的复合集流体材料，具备更好的工艺扩展性。',
+                dust_removal: '集成于切割头的同轴吹吸系统。在激光作用点同步进行吹气保护和粉尘吸除，效率高，但对系统集成度要求苛刻。',
+                tab_specs: '信息暂缺。预计将优先考虑成本与供应链稳定性，可能采用标准化规格的铜/铝箔。',
+                bead_impact: '控制目标 <20μm。作为高度垂直整合的厂商，会侧重于熔珠对电池包级别安全性的影响，建立严格的内控标准。'
+            },
+            {
+                id: 'eve',
+                company: 'EVE',
+                model: '4695',
+                laser_reason: '追求大规模量产的成本效益与工艺稳定性。激光工艺自动化程度高，可集成在线监测系统，保证大规模生产下的一致性和良率。',
+                dust_removal: '中央真空集尘系统，配合旋风分离器进行预处理。该方式适合大规模产线，便于集中处理废料，但对管道设计和气流均衡性要求高。',
+                tab_specs: '铜箔: ~80μm, 铝箔: ~90μm。采用相对较厚的集流体以保证结构稳定性和焊接可靠性，但对激光功率和切割速度提出更高要求。',
+                bead_impact: '控制目标 <20μm。除短路风险外，熔珠和熔渣成分复杂，可能催化副反应，消耗电解液，导致产气和容量过早衰减。'
+            },
+            {
+                id: 'zenergy',
+                company: '正力新能',
+                model: '46xx',
+                laser_reason: '聚焦高性能和高安全性市场，激光切割的热影响区小，能最大限度保护活性物质与集流体的界面结合力，对性能至关重要。',
+                dust_removal: '超声波辅助除尘技术。利用高频振动使微小颗粒物脱离极片表面，再由层流气帘配合吸尘系统带走，针对亚微米级粉尘效果好。',
+                tab_specs: '铜箔: ~65μm, 铝箔: ~75μm。要求极高的材料纯净度和厚度均一性，以匹配其高端产品定位，对供应链要求严苛。',
+                bead_impact: '目标尺寸 <12μm。对于追求极致性能的电芯，微小的熔珠也可能成为循环过程中的锂枝晶诱导点，必须严格控制。'
+            },
+            {
+                id: 'calb',
+                company: 'CALB',
+                model: '46xx 系列',
+                laser_reason: '技术跟进与市场布局，探索大圆柱在储能及商用车领域的应用。激光技术作为平台型工艺，便于未来扩展至不同尺寸和化学体系。',
+                dust_removal: '密封工作室+局部高效吸尘罩。将激光切割工位整体密封，形成微负压环境，配合靠近切割头的吸尘罩，有效抑制粉尘外泄。',
+                tab_specs: '铜箔: ~65μm, 铝箔: ~75μm。在保证性能的前提下进行轻量化设计，对激光工艺的稳定性（如功率波动）控制要求更为苛刻。',
+                bead_impact: '控制目标 <18μm。关注熔珠对后续极卷辊压平整度的影响。不平整会导致内部应力不均，影响浸润效果和长期可靠性。'
+            },
+            {
+                id: 'bak',
+                company: '比克',
+                model: '46xx',
+                laser_reason: '作为国内圆柱电池的先行者，应用激光技术是其在高倍率、高功率领域保持竞争力的必然选择，以改善散热和电流分布。',
+                dust_removal: '多级过滤的循环风除尘系统。在洁净房环境下，通过高效过滤器(HEPA)对空气进行循环过滤，整体控制环境洁净度。',
+                tab_specs: '铜箔: ~70μm, 铝箔: ~80μm。凭借多年圆柱生产经验，对材料的机械性能有深刻理解，强调延展性和抗疲劳性。',
+                bead_impact: '控制目标 <15μm。特别关注熔珠对高倍率充放电下局部温升的影响，这是决定小动力工具类电池寿命和安全的关键。'
+            },
+            {
+                id: 'svolt',
+                company: '蜂巢',
+                model: '46xx',
+                laser_reason: '配合其高速叠片技术理念，将激光切割作为高精度、高速化的前端工序，为后续的电芯装配提供高质量的极片。',
+                dust_removal: '湿法除尘探索。通过带静电的雾化液体捕捉空气中的粉尘颗粒，从源头杜绝粉尘飞扬，但需解决液体对电极材料的影响问题。',
+                tab_specs: '信息暂缺。预计将探索不同厚度方案，以平衡能量密度、成本和安全性，符合其一贯的多元化技术路线。',
+                bead_impact: '控制目标 <15μm。强调从源头（激光参数优化）减少熔珠产生，而非仅仅依赖后端除尘，注重过程控制。'
+            },
+            {
+                id: 'aesc',
+                company: 'AESC',
+                model: '46xx',
+                laser_reason: '满足其全球顶级车企客户对产品一致性和可靠性的严苛要求。激光工艺的数字化控制和可追溯性是其质量管理体系的重要一环。',
+                dust_removal: '在线CCD视觉检测与分区清洁。在切割后立即进行视觉检测，识别出粉尘和熔珠污染区域，并启动针对性的高压气流进行吹扫。',
+                tab_specs: '铜箔: ~75μm, 铝箔: ~85μm。倾向于采用相对保守但可靠性高的材料规格，确保在各种工况下的长期使用寿命。',
+                bead_impact: '控制目标 <18μm。极度关注由熔珠引发的长期、缓慢的容量衰减问题，通过严苛的老化测试来验证工艺的可靠性。'
+            }
+        ];
+
+        let activeFilters = new Set(techData.map(d => d.id));
+
+        const createTableRowHTML = (item) => `
+            <tr class="hover:bg-slate-100">
+                <td class="px-4 py-3 font-medium text-slate-900">${item.company}</td>
+                <td class="px-4 py-3">${item.model}</td>
+                <td class="px-4 py-3">${item.laser_reason}</td>
+                <td class="px-4 py-3">${item.dust_removal}</td>
+                <td class="px-4 py-3">${item.tab_specs}</td>
+                <td class="px-4 py-3">${item.bead_impact}</td>
+            </tr>
+        `;
+
+        const renderTable = (data) => {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = data.map(createTableRowHTML).join('');
+        };
+        
+        const setupFilters = () => {
+            const filtersContainer = document.getElementById('filters');
+            
+            const allButton = document.createElement('button');
+            allButton.textContent = '全部显示';
+            allButton.className = 'filter-btn active px-3 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium hover:bg-slate-100';
+            allButton.dataset.filter = 'all';
+            filtersContainer.appendChild(allButton);
+            
+            techData.forEach(item => {
+                const button = document.createElement('button');
+                button.textContent = item.company;
+                button.className = 'filter-btn active px-3 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium hover:bg-slate-100';
+                button.dataset.filter = item.id;
+                filtersContainer.appendChild(button);
+            });
+
+            filtersContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                if (!target.classList.contains('filter-btn')) return;
+
+                const filter = target.dataset.filter;
+
+                if (filter === 'all') {
+                    if (activeFilters.size === techData.length) {
+                         activeFilters.clear();
+                    } else {
+                         activeFilters = new Set(techData.map(d => d.id));
+                    }
+                } else {
+                    if (activeFilters.has(filter)) {
+                        activeFilters.delete(filter);
+                    } else {
+                        activeFilters.add(filter);
+                    }
+                }
+                updateApp();
+            });
+        };
+
+        const updateApp = () => {
+            const filteredData = techData.filter(item => activeFilters.has(item.id));
+            renderTable(filteredData);
+            updateFilterButtons();
+        };
+
+        const updateFilterButtons = () => {
+            const buttons = document.querySelectorAll('#filters .filter-btn');
+            buttons.forEach(btn => {
+                const filter = btn.dataset.filter;
+                if (filter === 'all') {
+                    if (activeFilters.size === techData.length && techData.length > 0) {
+                         btn.classList.add('active');
+                    } else {
+                         btn.classList.remove('active');
+                    }
+                } else {
+                    if (activeFilters.has(filter)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
+            updateApp();
+        });
+    </script>
+</body>
+</html>
+

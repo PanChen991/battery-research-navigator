@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>石墨负极材料交互式报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Background: #F5F5F4, Cards: #FFFFFF, Text: #374151, Accent: #3B82F6) -->
+    <!-- Application Structure Plan: A tab-based SPA design is chosen for clarity, separating the two distinct user tasks: 'Material Properties' and 'Supplier Analysis'. An initial overview dashboard provides high-level context with a market share chart and clear navigation to the detailed sections. This structure avoids overwhelming the user by presenting focused content views, with interactive filtering and search within each section to facilitate deep exploration. This is more user-friendly than a long, scrolling page. -->
+    <!-- Visualization & Content Choices: Overview: Donut chart (Chart.js) to show market share of graphite types (Goal: Inform). Task 1 (Properties): Interactive cards (HTML/JS) for easy comparison of material types (Goal: Compare/Organize), filterable by type. Task 2 (Suppliers): A comprehensive, searchable, and filterable HTML table (Goal: Organize/Compare) is used for the dense, multi-column data. A dynamic bar chart (Chart.js) visualizes supplier focus by material type based on filters (Goal: Relationships). This combination of charts for summary and interactive tables/cards for detail provides a powerful and layered data exploration experience. No SVG/Mermaid is used, relying on Chart.js Canvas and styled HTML. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F5F5F4; /* Warm neutral background */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-button.active {
+            border-color: #3B82F6;
+            color: #3B82F6;
+            background-color: #EFF6FF;
+        }
+        .filter-button.active {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">石墨负极材料及应用全景分析</h1>
+            <p class="mt-2 text-lg text-gray-600">一份深入了解电芯核心材料的交互式报告</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-300 mb-8">
+            <button id="tab-materials" class="tab-button text-lg font-medium py-3 px-6 border-b-2 border-transparent transition-colors duration-300">材料特性</button>
+            <button id="tab-suppliers" class="tab-button text-lg font-medium py-3 px-6 border-b-2 border-transparent transition-colors duration-300">供应商分析</button>
+        </nav>
+
+        <main id="content">
+            <!-- Materials Section -->
+            <section id="materials-section" class="hidden">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">石墨材料特性分析</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">本部分对不同类型的石墨负极材料进行深入剖析。您可以查看其详细的应用方向、结构特点、性能亮点及当前的技术进展。</p>
+                </div>
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                    <div class="table-responsive">
+                        <table class="w-full text-sm text-left text-gray-600">
+                             <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="py-3 px-4">材料类型</th>
+                                    <th scope="col" class="py-3 px-4">应用方向</th>
+                                    <th scope="col" class="py-3 px-4">材料特点</th>
+                                    <th scope="col" class="py-3 px-4">材料来源方向</th>
+                                    <th scope="col" class="py-3 px-4">材料本身亮点</th>
+                                    <th scope="col" class="py-3 px-4">目前材料进展</th>
+                                </tr>
+                            </thead>
+                            <tbody id="material-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Suppliers Section -->
+            <section id="suppliers-section" class="hidden">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">材料厂商及应用情况调研</h2>
+                     <p class="mt-2 text-gray-600 max-w-3xl mx-auto">本部分聚焦于主流负极材料供应商。您可以使用搜索框或过滤器快速定位特定厂商或材料类型，下方的表格将实时展示其产品信息、出货情况、合作的电芯厂以及最终的应用领域和性能特点。</p>
+                </div>
+                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" id="supplier-search" placeholder="🔍 搜索任意关键词..." class="md:col-span-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="supplier-type-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">所有材料类型</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                    <div class="table-responsive">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="py-3 px-4">材料厂商</th>
+                                    <th scope="col" class="py-3 px-4">材料类型</th>
+                                    <th scope="col" class="py-3 px-4">材料信息</th>
+                                    <th scope="col" class="py-3 px-4">材料亮点</th>
+                                    <th scope="col" class="py-3 px-4">出货情况</th>
+                                    <th scope="col" class="py-3 px-4">电芯厂</th>
+                                    <th scope="col" class="py-3 px-4">电芯规格</th>
+                                    <th scope="col" class="py-3 px-4">电芯体系</th>
+                                    <th scope="col" class="py-3 px-4">应用领域</th>
+                                    <th scope="col" class="py-3 px-4">电芯性能</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supplier-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const materialPropertiesData = [
+            {
+                type: '人造石墨',
+                application: '动力电池（EV/PHEV）、高端消费电子、储能',
+                features: '以针状焦、石油焦等为原料，经过石墨化等复杂工序制成。结构完整，晶粒取向可控，颗粒通常呈二次球形化设计，以提高压实密度。',
+                source: '主流负极厂商（贝特瑞、杉杉、紫宸等）均有成熟产品线。核心技术在于原料选择、造粒及石墨化工艺控制。',
+                highlights: '长循环寿命、高倍率性能、优异的低温性能、高安全性、与电解液相容性好。',
+                progress: '已实现大规模量产，是目前市场的主流技术路线。持续向更高容量、更快充、更低成本方向迭代。'
+            },
+            {
+                type: '天然石墨',
+                application: '消费电子电池、动力电池（常与人造石墨混合使用）、储能',
+                features: '来自天然鳞片石墨矿，经过提纯、球化、包覆等改性处理。片状结构，改性后形成类似土豆状的颗粒。表面通常进行碳包覆以改善循环性能。',
+                source: '贝特瑞、翔丰华等厂商是天然石墨的代表企业。技术关键在于矿源、提纯及表面改性技术。',
+                highlights: '高克容量（理论值接近372mAh/g）、成本相对较低、压实密度高。',
+                progress: '已大规模量产。主要通过复合造粒、表面包覆等技术提升其循环和倍率性能，以满足更高要求。'
+            },
+            {
+                type: '小粒径石墨',
+                application: '高倍率动力电池、无人机、电动工具、启停电源',
+                features: '属于人造石墨的细分品类，粒径通常在D50<10μm。更小的粒径缩短了锂离子扩散路径，并增加了与电解液的接触面积。',
+                source: '各大主流人造石墨厂商均有布局。专利集中在如何控制小粒径分布均匀性及抑制副反应。',
+                highlights: '极佳的功率特性（快充快放）、优异的低温性能。',
+                progress: '已量产，并在特定快充领域成为核心解决方案。目前挑战在于如何平衡高倍率与长循环、产气等问题。'
+            },
+            {
+                type: '硬碳',
+                application: '钠离子电池、长寿命/快充锂离子电池',
+                features: '以树脂、沥青等生物质或高分子为前驱体，在惰性气氛下不经石墨化处理直接碳化。结构混乱无序，含有大量“乱层结构”和纳米孔洞。',
+                source: '贝特瑞、中科星城、碳一等企业有深入研究和产品。来源广泛，如椰壳、树脂等，技术壁垒在于孔结构控制和首效提升。',
+                highlights: '优异的倍率性能、极长的循环寿命、适用于钠离子嵌入（层间距大）、低温性能好。',
+                progress: '已在钠离子电池中实现小批量量产。在锂电中仍处于预研或小众应用阶段，成本和首次库伦效率是其大规模应用的挑战。'
+            },
+            {
+                type: '中间相碳微球(MCMB)',
+                application: '高倍率电池、长寿命储能、特殊领域（军工、航天）',
+                features: '以煤沥青或石油沥青为原料，经热缩聚反应形成中间相小球体，再经碳化、石墨化制成。具有高度有序的洋葱状同心圆层状结构。',
+                source: '日本厂商起步较早，国内杉杉、贝特瑞等有相关技术储备和产品。制备工艺复杂，技术壁垒高。',
+                highlights: '极佳的倍率性能、极长的循环寿命、结构稳定、DCR低、与电解液相容性好。',
+                progress: '已实现量产，但由于成本较高，主要用于对性能要求苛刻的特定高端领域，市场份额相对较小。'
+            }
+        ];
+
+        const supplierData = [
+            { supplier: '贝特瑞', type: '人造石墨/天然石墨/硬碳', info: 'BG-系列(天然), S-系列(人造), H-系列(硬碳)', highlights: '技术全面，高容量硅基负极领先，天然石墨龙头', shipment: '头部供应商，年供量数十万吨', cell_mfg: 'CATL, 三星SDI, LGES, 松下, EVE', spec: '圆柱, 软包, 方壳', chemistry: '三元, 铁锂, 硅碳, 钠电', field: '高端EV, 消费电子, 储能', performance: '高能量密度, 快充' },
+            { supplier: '杉杉', type: '人造石墨/MCMB', info: 'G系列, FSN系列', highlights: '人造石墨老牌厂商，MCMB技术领先，产品线丰富', shipment: '头部供应商，年供量超二十万吨', cell_mfg: 'CATL, ATL, LGES, EVE', spec: '软包, 方壳', chemistry: '三元, 铁锂', field: '主流EV, 消费电子, 储能', performance: '长循环, 综合性能均衡' },
+            { supplier: '紫宸(璞泰来)', type: '人造石墨', info: 'G-系列', highlights: '高性能人造石墨龙头，快充技术领先，成本控制能力强', shipment: '头部供应商，年供量超二十万吨', cell_mfg: 'CATL, ATL, 欣旺达', spec: '软包, 方壳', chemistry: '三元, 铁锂', field: '主流EV, 消费电子', performance: '快充, 高性价比' },
+            { supplier: '中科星城', type: '人造石墨/硬碳', info: 'ZX-系列', highlights: '专注人造石墨，产品性价比高，积极布局硬碳', shipment: '重要供应商，年供量数万吨', cell_mfg: 'BYD, EVE, 瑞浦兰钧', spec: '方壳(刀片), 圆柱', chemistry: '铁锂, 三元, 钠电', field: 'PHEV, BEV, 储能', performance: '高性价比, 安全' },
+            { supplier: '尚太', type: '人造石墨', info: 'ST-系列', highlights: '成本优势明显，一体化产业链布局，石墨化自供率高', shipment: '快速增长，年供量近十万吨', cell_mfg: 'CATL, EVE', spec: '方壳, 圆柱', chemistry: '铁锂, 三元', field: 'EV, 储能', performance: '极致性价比' },
+            { supplier: '翔丰华', type: '天然石墨/人造石墨', info: 'XFH-N(天然), XFH-A(人造)', highlights: '高端天然石墨领先，产品精细化程度高', shipment: '专业供应商，年供量数万吨', cell_mfg: 'BYD, LGES, EVE', spec: '软包, 圆柱', chemistry: '三元, 铁锂(掺混)', field: '高端消费电子, EV', performance: '高能量密度' },
+            { supplier: '凯金', type: '人造石墨', info: 'K-系列', highlights: '专注于人造石墨，快速响应客户需求', shipment: '重要供应商，年供量数万吨', cell_mfg: 'CATL, EVE, 孚能科技', spec: '软包, 方壳', chemistry: '三元, 铁锂', field: 'EV, 储能', performance: '综合性能' },
+            { supplier: '碳一', type: '硬碳', info: 'C1-HC系列', highlights: '国内领先的硬碳材料开发商', shipment: '少量出货，钠电产业化初期', cell_mfg: '中科海钠, 传艺钠电', spec: '圆柱, 方壳', chemistry: '钠电', field: '储能, 低速车', performance: '长循环, 低温性能' },
+            { supplier: '坤天', type: '人造石墨', info: 'KT-系列', highlights: '新兴人造石墨厂商，产能扩张迅速', shipment: '快速增长，年供量数万吨', cell_mfg: 'BYD, EVE', spec: '方壳', chemistry: '铁锂', field: 'EV, 储能', performance: '高性价比' },
+            { supplier: '欣荣', type: '天然石墨', info: 'XR-系列', highlights: '专注于天然石墨改性，工艺独特', shipment: '小批量出货', cell_mfg: '消费类电芯厂', spec: '软包', chemistry: '三元(钴酸锂)', field: '消费电子', performance: '高能量密度' },
+            { supplier: '东岛', type: '人造石墨', info: 'DI-系列', highlights: '专注于高倍率、快充型人造石墨', shipment: '专业供应商，万吨级', cell_mfg: 'ATL, 欣旺达', spec: '软包', chemistry: '三元', field: '高端消费电子, 无人机', performance: '快充, 高倍率' }
+        ];
+
+        const tabs = document.querySelectorAll('.tab-button');
+        const sections = {
+            'materials': document.getElementById('materials-section'),
+            'suppliers': document.getElementById('suppliers-section')
+        };
+        
+        function switchTab(tabId) {
+            tabs.forEach(tab => {
+                tab.classList.toggle('active', tab.id === `tab-${tabId}`);
+            });
+            Object.keys(sections).forEach(key => {
+                sections[key].classList.toggle('hidden', key !== tabId);
+            });
+            window.scrollTo(0, 0);
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.id.split('-')[1];
+                switchTab(tabId);
+            });
+        });
+        
+        switchTab('materials'); 
+
+        const materialTableBody = document.getElementById('material-table-body');
+
+        function renderMaterialTable() {
+            materialTableBody.innerHTML = '';
+            materialPropertiesData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "bg-white border-b hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-gray-900 whitespace-nowrap">${item.type}</td>
+                    <td class="py-3 px-4">${item.application}</td>
+                    <td class="py-3 px-4">${item.features}</td>
+                    <td class="py-3 px-4">${item.source}</td>
+                    <td class="py-3 px-4 text-blue-600">${item.highlights}</td>
+                    <td class="py-3 px-4"><span class="font-medium ${item.progress.includes('量产') ? 'text-green-600' : 'text-yellow-600'}">${item.progress}</span></td>
+                `;
+                materialTableBody.appendChild(row);
+            });
+        }
+        
+        renderMaterialTable();
+
+        const supplierSearch = document.getElementById('supplier-search');
+        const supplierTypeFilter = document.getElementById('supplier-type-filter');
+        const supplierTableBody = document.getElementById('supplier-table-body');
+        
+        const supplierMaterialTypes = [...new Set(supplierData.flatMap(item => item.type.split('/')))];
+        supplierMaterialTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            supplierTypeFilter.appendChild(option);
+        });
+        
+        function renderSupplierTable() {
+            const searchTerm = supplierSearch.value.toLowerCase();
+            const typeFilter = supplierTypeFilter.value;
+            
+            const filteredData = supplierData.filter(item => {
+                const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+                const matchesType = typeFilter === 'all' || item.type.includes(typeFilter);
+                return matchesSearch && matchesType;
+            });
+
+            supplierTableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                supplierTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-gray-500">未找到匹配的结果</td></tr>`;
+                return;
+            }
+
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "bg-white border-b hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-gray-900 whitespace-nowrap">${item.supplier}</td>
+                    <td class="py-3 px-4">${item.type.split('/').map(t => `<span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${t}</span>`).join('')}</td>
+                    <td class="py-3 px-4">${item.info}</td>
+                    <td class="py-3 px-4 text-blue-600">${item.highlights}</td>
+                    <td class="py-3 px-4">${item.shipment}</td>
+                    <td class="py-3 px-4">${item.cell_mfg}</td>
+                    <td class="py-3 px-4">${item.spec}</td>
+                    <td class="py-3 px-4">${item.chemistry}</td>
+                    <td class="py-3 px-4">${item.field}</td>
+                    <td class="py-3 px-4 font-medium text-green-700">${item.performance}</td>
+                `;
+                supplierTableBody.appendChild(row);
+            });
+        }
+        
+        supplierSearch.addEventListener('input', renderSupplierTable);
+        supplierTypeFilter.addEventListener('change', renderSupplierTable);
+
+        renderSupplierTable();
+    });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>46系圆柱电池卷绕工艺分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 
+        This is a minimalist, data-focused application designed for expert analysis. The structure is streamlined to provide the most direct access to the core dataset, removing all extraneous visual elements per user request.
+        1.  **Header:** A clean title to establish context.
+        2.  **Interactive Filters:** Essential controls for the user to segment the data by company type and specific company, allowing for targeted analysis.
+        3.  **Main Data Table:** The central component of the application. A 6-column table that directly mirrors the source report format, providing a comprehensive and unfiltered view of all technical details. It is designed to be the single point of focus.
+        This highly focused structure eliminates cognitive overhead and allows the user to engage directly with the technical information in the table, which is the primary goal.
+    -->
+    <!-- Visualization & Content Choices:
+        1.  **Full Company Data:** Report Info -> Goal: Organize & Present -> Method: 6-Column HTML Table -> Interaction: Filtering. -> Justification: The table is the most effective and direct method for presenting detailed, multi-faceted technical specifications. All charts and summary visuals were removed to align with the user's request for a purely data-centric view.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfcfb;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="bg-[#F9F7F3] text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#4A4A4A]">46系圆柱电池卷绕工艺分析</h1>
+            <p class="text-lg text-gray-500 mt-2">主流电池厂及设备商卷绕卷针尺寸与结构调研</p>
+        </header>
+
+        <main>
+             <!-- Filter Section -->
+            <section id="filters" class="mb-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
+                <h3 class="text-xl font-semibold mb-4 text-[#4A4A4A]">数据筛选</h3>
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="font-medium">公司类型:</div>
+                    <div>
+                        <button data-filter-type="type" data-filter-value="all" class="filter-btn-type px-4 py-2 text-sm rounded-full bg-indigo-500 text-white shadow">全部</button>
+                        <button data-filter-type="type" data-filter-value="电池公司" class="filter-btn-type px-4 py-2 text-sm rounded-full bg-gray-200 hover:bg-gray-300">电池公司</button>
+                        <button data-filter-type="type" data-filter-value="供应商" class="filter-btn-type px-4 py-2 text-sm rounded-full bg-gray-200 hover:bg-gray-300">供应商</button>
+                    </div>
+                    <div class="w-full md:w-auto">
+                        <label for="company-filter" class="font-medium mr-2">选择公司:</label>
+                        <select id="company-filter" class="p-2 border rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-400">
+                            <option value="all">所有公司</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Table Section -->
+            <section id="data-table" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+                <table class="w-full text-left table-auto border-collapse min-w-[1200px]">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-4 font-semibold text-gray-600 sticky left-0 bg-gray-100 z-10 min-w-[180px]">公司名称</th>
+                            <th class="p-4 font-semibold text-gray-600 min-w-[150px]">电芯型号</th>
+                            <th class="p-4 font-semibold text-gray-600 min-w-[150px]">46圆柱卷针尺寸 (mm)</th>
+                            <th class="p-4 font-semibold text-gray-600 min-w-[150px]">抽芯后尺寸 (mm)</th>
+                            <th class="p-4 font-semibold text-gray-600 min-w-[300px]">卷针结构对隔膜的影响</th>
+                            <th class="p-4 font-semibold text-gray-600 min-w-[250px]">原材料信息</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- JS will populate this -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 py-6 border-t">
+            <p class="text-sm text-gray-500">&copy; 2025 电池工艺研究. 信息来源于公开专利、行业报告及专家分析，具体数值为基于行业趋势的估算。</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const batteryData = [
+                { id: 1, company: 'Tesla (特斯拉)', type: '电池公司', model: '4680 Gen 1', mandrelSize: '9-10 (干法电极)', extractionSize: '~10.5', separatorImpact: '干法电极对卷绕张力要求极高，易导致隔膜拉伸或褶皱。无极耳设计增加了对齐难度，对卷针的光洁度和真圆度要求苛刻。', materials: '正极: 高镍NCM; 负极: 石墨; 隔膜: 干法基膜+涂覆' },
+                { id: 2, company: 'CATL (宁德时代)', type: '电池公司', model: '麒麟4680/4695', mandrelSize: '10-12 (麒麟结构)', extractionSize: '~12.5', separatorImpact: '麒麟电池结构注重散热，卷针可能集成冷却通道设计，结构更复杂。高速卷绕下需优化隔膜张力闭环控制，防止内部应力过大。', materials: '正极: 高镍NCM/NCMX; 负极: 快充石墨/硅碳; 隔膜: 湿法高性能膜' },
+                { id: 3, company: 'EVE (亿纬锂能)', type: '电池公司', model: '4695', mandrelSize: '9-11', extractionSize: '~11.5', separatorImpact: '采用全极耳设计，电流分布均匀，但对卷绕对齐精度要求更高。卷针结构需要适配极耳焊接区域，避免刮伤或刺穿隔膜。', materials: '正极: NCM三元; 负极: 硅碳复合材料; 隔膜: 涂覆增强型隔膜' },
+                { id: 4, company: 'BYD (比亚迪)', type: '电池公司', model: '4680 (规划中)', mandrelSize: '8-10 (或集成刀片思路)', extractionSize: '~10.5', separatorImpact: '比亚迪可能将刀片电池的部分思路应用于圆柱，对卷绕工艺的颠覆性较大。对隔膜的抗穿刺性和韧性提出更高要求。', materials: '正极: LFP (磷酸铁锂) 或 高镍; 负极: 石墨; 隔膜: 自有技术' },
+                { id: 5, company: 'CALB (中创新航)', type: '电池公司', model: '4680/4695', mandrelSize: '9-11', extractionSize: '~11.5', separatorImpact: '注重生产效率和成本控制，卷针设计可能偏向于标准化和耐用性。隔膜张力控制是保证良率的关键，尤其是在加速和减速阶段。', materials: '正极: 高电压中镍/高镍; 负极: 石墨; 隔膜: 高安全性涂覆膜' },
+                { id: 6, company: 'SVOLT (蜂巢能源)', type: '电池公司', model: '4680/4695', mandrelSize: '8-10', extractionSize: '~10.5', separatorImpact: '蜂巢的短刀片经验可能应用在卷绕上，对隔膜的平整度和抗拉强度有严格要求。飞叠-卷绕混合工艺是其潜在方向。', materials: '正极: 无钴材料/NCM; 负极: 石墨; 隔膜: 湿法薄膜' },
+                { id: 7, company: '先导智能', type: '供应商', model: '4680卷绕机', mandrelSize: '可定制 (8-12)', extractionSize: '根据客户需求', separatorImpact: '设备端提供高精度张力控制系统（<3%波动），采用浮动辊设计减少隔膜抖动。卷针采用特殊涂层，降低摩擦，保护隔膜。', materials: '设备方案，支持NCM, LFP, Si-C等多种体系' },
+                { id: 8, company: '赢合科技', type: '供应商', model: '4680卷绕机', mandrelSize: '可定制 (8-12)', extractionSize: '根据客户需求', separatorImpact: '采用视觉系统进行实时纠偏，保证对齐精度。卷针采用分段式或可变径结构，以适应不同张力需求，减少对隔膜的损伤。', materials: '设备方案，强调高速稳定性和兼容性' },
+                { id: 9, company: '诚捷智能', type: '供应商', model: '圆柱卷绕方案', mandrelSize: '可定制', extractionSize: '根据客户需求', separatorImpact: '专注于小型圆柱经验，其4680方案注重卷绕初期的隔膜导入和张力建立，防止起始端褶皱。卷针表面粗糙度控制在纳米级别。', materials: '设备方案，主打高精度和稳定性' }
+            ];
+
+            let currentTypeFilter = 'all';
+            let currentCompanyFilter = 'all';
+
+            const tableBody = document.getElementById('table-body');
+            const companyFilter = document.getElementById('company-filter');
+            
+            function populateCompanyFilter(data) {
+                const companies = [...new Set(data.map(item => item.company))];
+                companyFilter.innerHTML = '<option value="all">所有公司</option>';
+                companies.sort().forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    option.textContent = company;
+                    companyFilter.appendChild(option);
+                });
+            }
+
+            function renderTable(data) {
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="6" class="text-center p-8 text-gray-500">没有匹配的数据</td>`;
+                    tableBody.appendChild(row);
+                    return;
+                }
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10">${item.company} <span class="text-xs px-2 py-1 rounded-full ${item.type === '电池公司' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">${item.type}</span></td>
+                        <td class="p-4">${item.model}</td>
+                        <td class="p-4 font-mono">${item.mandrelSize}</td>
+                        <td class="p-4 font-mono">${item.extractionSize}</td>
+                        <td class="p-4 text-sm">${item.separatorImpact}</td>
+                        <td class="p-4 text-sm">${item.materials}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            function filterData() {
+                let filtered = batteryData;
+                if (currentTypeFilter !== 'all') {
+                    filtered = filtered.filter(item => item.type === currentTypeFilter);
+                }
+                if (currentCompanyFilter !== 'all') {
+                    filtered = filtered.filter(item => item.company === currentCompanyFilter);
+                }
+                renderTable(filtered);
+            }
+
+            document.querySelectorAll('.filter-btn-type').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    currentTypeFilter = e.target.dataset.filterValue;
+                    document.querySelectorAll('.filter-btn-type').forEach(btn => {
+                        btn.classList.remove('bg-indigo-500', 'text-white', 'shadow');
+                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                    });
+                    e.target.classList.add('bg-indigo-500', 'text-white', 'shadow');
+                    e.target.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                    companyFilter.value = 'all';
+                    currentCompanyFilter = 'all';
+                    filterData();
+                });
+            });
+
+            companyFilter.addEventListener('change', (e) => {
+                currentCompanyFilter = e.target.value;
+                if (currentCompanyFilter !== 'all') {
+                    const selectedCompanyType = batteryData.find(item => item.company === currentCompanyFilter).type;
+                    currentTypeFilter = selectedCompanyType;
+                    document.querySelectorAll('.filter-btn-type').forEach(btn => {
+                        btn.classList.remove('bg-indigo-500', 'text-white', 'shadow');
+                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                        if (btn.dataset.filterValue === selectedCompanyType) {
+                            btn.classList.add('bg-indigo-500', 'text-white', 'shadow');
+                            btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                        }
+                    });
+                } else {
+                    currentTypeFilter = 'all';
+                     document.querySelectorAll('.filter-btn-type').forEach(btn => {
+                        btn.classList.remove('bg-indigo-500', 'text-white', 'shadow');
+                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                        if (btn.dataset.filterValue === 'all') {
+                             btn.classList.add('bg-indigo-500', 'text-white', 'shadow');
+                            btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                        }
+                    });
+                }
+                filterData();
+            });
+            
+            populateCompanyFilter(batteryData);
+            renderTable(batteryData);
+        });
+    </script>
+</body>
+</html>
+

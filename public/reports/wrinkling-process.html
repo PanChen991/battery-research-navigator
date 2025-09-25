@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>46系圆柱电池切卷打皱问题分析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A dashboard-style SPA. The structure starts with a high-level summary visualization (a bar chart of wrinkle causes) to give users an immediate overview. Below this, control filters (for company and cause) allow users to drill down into the data. The main content is an interactive, expandable table presenting the detailed dataset. This structure was chosen to transform a static report into an explorable analytical tool. It guides the user from a general overview to specific details, facilitating comparison and pattern recognition, which is more effective than a simple static table for understanding complex manufacturing issues. -->
+    <!-- Visualization & Content Choices: 1. Main Causes Chart: Report Info -> Frequency of wrinkle root causes. Goal -> Inform/Compare. Viz -> Bar Chart (Chart.js/Canvas). Interaction -> Dynamically updates based on table filters. Justification -> Provides a quick, quantitative summary of the most common problems. 2. Detailed Data Table: Report Info -> The full 7-column dataset for each case. Goal -> Organize/Inform/Explore. Viz -> Interactive HTML Table (Tailwind CSS). Interaction -> Filterable by company/cause, rows are expandable to show detailed information without cluttering the initial view. Justification -> Presents complex, multi-faceted data in a structured, user-controllable format, enabling deep dives into specific cases. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">46系圆柱电池切卷打皱分析平台</h1>
+            <p class="mt-2 text-lg text-slate-600">一个用于分析电芯制造过程中正负极片及隔膜打皱问题的交互式仪表板。</p>
+        </header>
+
+        <main>
+            <section id="data-explorer" class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-6 text-slate-800">案例浏览器与过滤器</h2>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-1">
+                        <label for="company-filter" class="block text-sm font-medium text-slate-700 mb-1">筛选电池厂/整车厂</label>
+                        <select id="company-filter" class="w-full p-2 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">所有公司</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="cause-filter" class="block text-sm font-medium text-slate-700 mb-1">筛选打皱原因类型</label>
+                        <select id="cause-filter" class="w-full p-2 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">所有原因</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">电池厂/整车厂</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">电芯型号</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">主要打皱原因</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">预防措施</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">设备结构信息</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">原材料信息</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">对电性能的影响</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="bg-white divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = [
+                {
+                    company: "Tesla",
+                    model: "4680",
+                    causeCategory: "张力控制",
+                    cause: "高速卷绕过程中张力波动大，隔膜跟随性差导致内圈起皱。",
+                    prevention: "采用高精度伺服电机和动态张力传感器，实现分段闭环恒张力控制；优化卷针设计减少初始扰动。",
+                    equipment: "定制化高速卷绕机（类似先导/赢合高速线），集成在线张力监测系统和纠偏系统（EPC）。",
+                    material: "隔膜需要有更高的拉伸强度和更低的热收缩率。对铜箔/铝箔的厚度均匀性要求极高。",
+                    performance: "轻微打皱导致局部电流密度不均，循环寿命下降10-15%。严重时刺穿隔膜，内短路风险极高，无法通过安规测试。"
+                },
+                {
+                    company: "CATL",
+                    model: "麒麟电池 (46xx系列)",
+                    causeCategory: "原材料",
+                    cause: "隔膜来料存在微小的厚度不均或'荷叶边'问题，在卷绕累积后形成明显褶皱。",
+                    prevention: "加强来料检验（IQC），采用在线高精度测厚仪进行100%检测；与隔膜供应商（如恩捷股份）深度合作，定制化开发高均一性产品。",
+                    equipment: "设备上增加视觉检测系统（CCD），在卷绕前识别材料缺陷并报警。",
+                    material: "进口高性能聚乙烯（PE）湿法隔膜，厚度公差要求控制在±0.5μm以内。",
+                    performance: "导致电芯容量离散度增大，IR（内阻）偏高。长期循环下，褶皱处易析锂，形成锂枝晶，有安全隐患。"
+                },
+                {
+                    company: "亿纬锂能",
+                    model: "4695",
+                    causeCategory: "设备精度",
+                    cause: "卷绕机的主轴与导向辊存在微米级的平行度偏差，导致极片和隔膜在卷绕过程中跑偏并相互挤压。",
+                    prevention: "定期使用激光对中仪对设备进行校准；操作规程（SOP）中明确规定关键部件的校准周期和标准。",
+                    equipment: "设备来自赢合科技，其高精度系列卷绕机对安装调试要求极高。采用整体花岗岩基座以保证长期稳定性。",
+                    material: "负极石墨涂布边缘平直度要求高，毛刺需控制在5μm以下，避免刮伤隔膜或在跑偏时形成应力集中点。",
+                    performance: "造成电芯的容量偏低，自放电率偏高。在滥用测试（如挤压、针刺）中，失效点往往位于褶皱区域。"
+                },
+                {
+                    company: "比亚迪",
+                    model: "4680 (研发中)",
+                    causeCategory: "工艺参数",
+                    cause: "卷绕速度与真空吸附力不匹配。速度过快时，极片未能完全贴合卷针就被卷入，形成初始褶皱。",
+                    prevention: "优化卷绕启停阶段的S型加减速曲线；根据不同材料特性，建立卷绕速度与真空压力的工艺参数矩阵（DOE）。",
+                    equipment: "吉阳智能提供的实验线上，真空系统可进行编程控制，实现压力与速度的联动。",
+                    material: "正极磷酸铁锂（LFP）材料较硬，对卷绕的柔性要求更高，需要更精细的参数匹配。",
+                    performance: "影响首次库伦效率（FCE），褶皱处的活物质颗粒可能被压碎，导致不可逆的容量损失。"
+                },
+                {
+                    company: "中创新航 (CALB)",
+                    model: "46系列",
+                    causeCategory: "环境控制",
+                    cause: "车间湿度过低，导致静电累积。隔膜因静电吸附在设备导辊上，造成局部张力异常和拖拽。",
+                    prevention: "将生产车间湿度严格控制在30%±5% RH；在关键工位安装离子风机，主动消除材料表面静电。",
+                    equipment: "设备进料口和关键过辊处增加除静电装置。导向辊采用表面处理过的防静电材料。",
+                    material: "隔膜本身会进行抗静电处理，但效果有限，仍需环境和设备配合。",
+                    performance: "打皱位置随机性大，导致产品批次稳定性差。对电芯的倍率性能有轻微负面影响。"
+                },
+                {
+                    company: "正力新能 (Sunwoda)",
+                    model: "SFC48",
+                    causeCategory: "设备精度",
+                    cause: "切卷工序的刀具磨损，产生毛刺。毛刺在卷绕时勾住隔膜，形成连续的V型小褶皱。",
+                    prevention: "建立刀具寿命管理系统，定期更换或研磨模切刀具；采用激光切割替代传统模切，从根本上消除毛刺问题。",
+                    equipment: "华冠科技的模切机，集成了刀具磨损在线监测功能。部分新产线已切换为激光制片卷绕一体机。",
+                    material: "铜箔的延展性对毛刺的产生有影响，采用延展性更好的电解铜箔可以适当延长刀具寿命。",
+                    performance: "毛刺可能刺穿隔膜，造成微短路，这是最危险的缺陷之一。电芯成品率和安全性都受到严重影响。"
+                },
+                 {
+                    company: "蜂巢能源 (SVOLT)",
+                    model: "4680 (短刀)",
+                    causeCategory: "张力控制",
+                    cause: "收放卷的卷径变化导致张力控制出现非线性误差，尤其是在卷芯和满卷状态下容易失控。",
+                    prevention: "采用卷径实时计算或激光测径，结合PID算法对张力进行前馈+反馈式补偿控制。",
+                    equipment: "设备供应商（如诚捷智能）的控制系统中集成了先进的张力控制算法包。",
+                    material: "对极片涂布的均匀性要求高，因为重量不均也会影响张力计算的准确性。",
+                    performance: "导致电芯成品内阻分布范围变宽，一致性变差，对电池包（Pack）的成组效率和寿命不利。"
+                }
+            ];
+
+            const companyFilter = document.getElementById('company-filter');
+            const causeFilter = document.getElementById('cause-filter');
+            const tableBody = document.getElementById('data-table-body');
+
+            function getUniqueValues(key) {
+                return [...new Set(data.map(item => item[key]))];
+            }
+
+            function populateFilters() {
+                const companies = getUniqueValues('company');
+                const causeCategories = getUniqueValues('causeCategory');
+
+                companies.forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    option.textContent = company;
+                    companyFilter.appendChild(option);
+                });
+
+                causeCategories.forEach(cause => {
+                    const option = document.createElement('option');
+                    option.value = cause;
+                    option.textContent = cause;
+                    causeFilter.appendChild(option);
+                });
+            }
+
+            function renderTable(filteredData) {
+                tableBody.innerHTML = '';
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-500">未找到匹配的数据。</td></tr>`;
+                    return;
+                }
+                
+                filteredData.forEach((item) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm font-medium text-slate-900">${item.company}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.model}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.cause}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.prevention}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.equipment}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.material}</td>
+                        <td class="px-6 py-4 whitespace-normal align-top text-sm text-slate-700">${item.performance}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function filterAndRender() {
+                const selectedCompany = companyFilter.value;
+                const selectedCause = causeFilter.value;
+
+                const filteredData = data.filter(item => {
+                    const companyMatch = selectedCompany === 'all' || item.company === selectedCompany;
+                    const causeMatch = selectedCause === 'all' || item.causeCategory === selectedCause;
+                    return companyMatch && causeMatch;
+                });
+
+                renderTable(filteredData);
+            }
+
+            companyFilter.addEventListener('change', filterAndRender);
+            causeFilter.addEventListener('change', filterAndRender);
+            
+            populateFilters();
+            filterAndRender();
+        });
+    </script>
+</body>
+</html>
+

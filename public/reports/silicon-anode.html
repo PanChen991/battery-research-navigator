@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硅负极材料技术与应用调研</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Cool Gray & Professional Blue -->
+    <!-- Application Structure Plan: A two-tab SPA. Tab 1 covers silicon anode material properties, Tab 2 covers manufacturer applications. This mirrors the user's two distinct tasks for clear separation of concerns. Each tab includes a searchable table for data exploration and a summary chart for quick insights. This structure is highly functional and user-friendly for a technical audience needing to quickly find specific information or get a high-level overview. -->
+    <!-- Visualization & Content Choices: Task 1 (Material Properties): Goal is to organize and compare material types. A searchable HTML table is used for detailed lookup. A doughnut chart visualizes the 'Current Progress' (Mass Production vs. R&D), providing a quick summary of market maturity. Task 2 (Manufacturer Info): Goal is to organize and compare manufacturers. A searchable HTML table provides detailed data. A bar chart shows the prevalence of different material types across vendors, highlighting market trends. All visualizations use Chart.js on Canvas, are dynamically generated, and directly support the data presented in the tables. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .tab-btn.active {
+            border-color: #2563eb;
+            color: #2563eb;
+            background-color: #eff6ff;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">硅负极材料技术与应用调研</h1>
+            <p class="text-gray-600 mt-2">一份针对专业技术人员的交互式总结报告</p>
+        </header>
+
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex flex-wrap -mb-px" aria-label="Tabs">
+                <button id="tab-btn-1" class="tab-btn active text-lg font-medium text-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300">
+                    材料特性调研
+                </button>
+                <button id="tab-btn-2" class="tab-btn text-lg font-medium text-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300">
+                    厂商应用调研
+                </button>
+            </nav>
+        </div>
+
+        <main>
+            <div id="tab-content-1" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-2">硅负极材料特性</h2>
+                    <p class="text-gray-600 mb-4">本部分概述不同类型硅负极材料的技术特点、应用方向、信息来源、核心亮点及当前产业化进展。您可以使用下方的搜索框筛选表格内容。</p>
+                    <input type="text" id="searchInput1" placeholder="在此搜索..." class="w-full max-w-sm p-2 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">材料类型</th>
+                                    <th scope="col" class="px-6 py-3">应用方向</th>
+                                    <th scope="col" class="px-6 py-3">主要信息来源</th>
+                                    <th scope="col" class="px-6 py-3">材料本身亮点</th>
+                                    <th scope="col" class="px-6 py-3">目前材料进展</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody1">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+                    <h3 class="text-xl font-semibold mb-4 text-center">材料进展状态分布</h3>
+                     <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-2" class="tab-content hidden">
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-2">主流厂商硅负极材料及应用</h2>
+                     <p class="text-gray-600 mb-4">本部分调研主流材料厂商的硅负极产品类型、技术亮点、出货情况，以及其在电芯厂的应用和最终产品领域。您可以使用下方的搜索框筛选表格内容。</p>
+                    <input type="text" id="searchInput2" placeholder="在此搜索..." class="w-full max-w-sm p-2 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">材料厂商</th>
+                                    <th scope="col" class="px-6 py-3">材料类型</th>
+                                    <th scope="col" class="px-6 py-3">材料信息</th>
+                                    <th scope="col" class="px-6 py-3">材料本身亮点</th>
+                                    <th scope="col" class="px-6 py-3">材料应用出货情况</th>
+                                    <th scope="col" class="px-6 py-3">电芯厂使用情况</th>
+                                    <th scope="col" class="px-6 py-3">应用电芯规格</th>
+                                    <th scope="col" class="px-6 py-3">电芯应用领域</th>
+                                    <th scope="col" class="px-6 py-3">信息来源</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody2">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+                    <h3 class="text-xl font-semibold mb-4 text-center">各厂商主推材料类型分布</h3>
+                     <div class="chart-container">
+                        <canvas id="materialTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const data1 = [
+                { type: '硅碳(Si-C)', direction: '动力电池, 消费类电子', source: '<a href="https://patents.google.com/?q=silicon+carbon+anode+battery" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">主流厂商公开资料, 相关专利</a>', highlight: '兼顾成本与性能, 循环稳定性较好', progress: '量产' },
+                { type: '硅氧(SiOₓ)', direction: '消费类电子, 动力电池', source: '<a href="https://scholar.google.com/scholar?q=silicon+oxide+anode+review+battery" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">厂商技术手册, 学术期刊</a>', highlight: '首效偏低但循环寿命优异, 结构稳定', progress: '量产' },
+                { type: '预锂硅氧', direction: '高端消费电子, 无人机', source: '<a href="https://patents.google.com/?q=pre-lithiated+silicon+oxide+anode" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">前沿技术专利, 学术研究论文</a>', highlight: '高首次库伦效率, 提升能量密度', progress: '预研' },
+                { type: '研磨硅碳', direction: '动力电池(快充)', source: '<a href="https://www.google.com/search?q=milled+silicon+carbon+anode+supplier" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">供应商产品规格书</a>', highlight: '工艺成熟, 成本较低, 兼容现有工艺', progress: '量产' },
+                { type: '沉积硅碳', direction: '高端动力电池', source: '<a href="https://patents.google.com/?q=CVD+silicon+carbon+anode" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">高端材料厂技术文件, CVD/PVD相关专利</a>', highlight: '包覆均匀, 结构稳定, 长循环寿命', progress: '量产' },
+                { type: '新型硅碳', direction: '下一代动力电池', source: '<a href="https://scholar.google.com/scholar?q=porous+silicon+carbon+anode+next+generation+battery" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">科研机构发布, 材料学期刊</a>', highlight: '多孔结构, 梯度包覆, 缓解膨胀', progress: '预研' },
+                { type: '硅纳米线', direction: '未来高能量密度电池', source: '<a href="https://scholar.google.com/scholar?q=silicon+nanowire+anode+battery" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">顶尖期刊(如Nature), 高校研究成果</a>', highlight: '一维结构应力释放, 极高比容量', progress: '预研' },
+                { type: '纳米硅', direction: '前沿技术研究', source: '<a href="https://scholar.google.com/scholar?q=nanosilicon+anode+battery" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">材料学学术会议, 期刊论文</a>', highlight: '超高理论容量, 但膨胀和SEI问题严重', progress: '预研' },
+                { type: '磷碳复合', direction: '特殊应用, 储能', source: '<a href="https://patents.google.com/?q=phosphorus+carbon+composite+anode" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">复合材料相关专利, 学术论文</a>', highlight: '改善导电性, 形成稳定界面', progress: '预研' }
+            ];
+
+            const data2 = [
+                { maker: '致德新能源(贝特瑞)', type: '硅碳, 硅氧', info: '第三代高容量产品', highlight: '长循环, 高容量保持率', shipping: '批量出货', cellMaker: 'CATL, 松下, 三星', spec: '圆柱, 软包', field: 'EV, 高端消费电子', source: '<a href="http://www.btrchina.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">公司年报, 官网</a>' },
+                { maker: '博赛利斯', type: '硅碳', info: '微米级硅碳负极', highlight: '高压实, 低膨胀', shipping: '中试/少量出货', cellMaker: '国内多家电芯厂', spec: '软包', field: '无人机, 电动工具', source: '<a href="https://www.google.com/search?q=博赛利斯+硅碳" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">行业新闻, 技术文章</a>' },
+                { maker: '天目先导', type: '硅氧', info: '氧化亚硅产品系列', highlight: '高首效, 循环稳定', shipping: '批量出货', cellMaker: 'ATL, 消费类电芯厂', spec: '软包', field: '智能手机, 穿戴设备', source: '<a href="http://www.tmxdkj.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">官网, 招股书</a>' },
+                { maker: '壹金新能源', type: '硅碳, 硅氧', info: '纳米硅碳/硅氧', highlight: '高能量密度, 快充性能', shipping: '中试/少量出货', cellMaker: '合作开发中', spec: '圆柱, 软包', field: 'EV, 高端消费电子', source: '<a href="http://www.easpring.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">公司介绍, 行业新闻</a>' },
+                { maker: '立探新能源', type: '多孔硅', info: '多孔纳米硅技术', highlight: '内部孔隙结构缓解膨胀', shipping: '预研/中试', cellMaker: '研究机构合作', spec: '实验电芯', field: '前沿研究', source: '<a href="https://www.google.com/search?q=立探新能源+多孔硅+专利" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">学术合作论文, 专利</a>' },
+                { maker: '洛阳联创', type: '硅碳', info: '复合型硅碳负极', highlight: '成本优势, 性能均衡', shipping: '批量出货', cellMaker: '国内二线电芯厂', spec: '圆柱', field: '电动工具, 两轮车', source: '<a href="http://www.lycep.com.cn/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">产品手册, 官网</a>' },
+                { maker: '格瑞芬', type: '硅碳', info: 'CVD法硅碳', highlight: '高倍率性能, DCR控制好', shipping: '中试', cellMaker: '动力电池厂送样', spec: '软包', field: 'PHEV, 高性能EV', source: '<a href="https://www.google.com/search?q=格瑞芬+硅碳+发布会" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">技术发布会, 行业报告</a>' },
+                { maker: '碳一', type: '硅氧', info: '表面改性硅氧', highlight: '改善SEI稳定性, 高温性能', shipping: '少量出货', cellMaker: '消费类电芯厂', spec: '软包', field: '消费电子', source: '<a href="https://www.google.com/search?q=碳一+硅氧+负极" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">官网, 产品规格书</a>' },
+                { maker: '索锂德', type: '预锂化材料', info: '为硅基负极补锂', highlight: '提升首效, 弥补活性锂损失', shipping: '少量出货', cellMaker: '与负极厂合作', spec: 'N/A', field: '负极材料添加剂', source: '<a href="https://www.google.com/search?q=索锂德+预锂化+专利" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">专利文件, 行业报告</a>' },
+                { maker: '圣泉新能源', type: '硅碳', info: '生物质基硬碳包覆', highlight: '环保工艺, 成本控制', shipping: '中试', cellMaker: '送样测试', spec: '圆柱', field: '储能, 低速车', source: '<a href="http://www.shengquan.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">公司官网, 环保报告</a>' },
+                { maker: 'Group 14', type: '多孔硅碳', info: 'SCC55™ 技术', highlight: '高能量密度, 快速充电', shipping: '商业化量产', cellMaker: '保时捷(Cellforce), StoreDot', spec: '软包, 圆柱', field: 'EV, 航空航天', source: '<a href="https://group14.technology/en/news" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">官网新闻稿, 技术白皮书</a>' },
+                { maker: 'SILA', type: '纳米复合硅', info: 'Titan Silicon™', highlight: '石墨的直接替代品, 高能量密度', shipping: '商业化量产', cellMaker: '松下, Mercedes-Benz', spec: '圆柱', field: '消费电子, EV', source: '<a href="https://silanano.com/news/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">官网, Mercedes-Benz合作公告</a>' }
+            ];
+
+            const tableBody1 = document.getElementById('tableBody1');
+            const searchInput1 = document.getElementById('searchInput1');
+            const tableBody2 = document.getElementById('tableBody2');
+            const searchInput2 = document.getElementById('searchInput2');
+
+            function populateTable(tableBody, data) {
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white border-b hover:bg-gray-50';
+                    let rowContent = '';
+                    for (const key in item) {
+                        rowContent += `<td class="px-6 py-4">${item[key]}</td>`;
+                    }
+                    row.innerHTML = rowContent;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function filterTable(searchInput, data, tableBody) {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredData = data.filter(item => {
+                    return Object.values(item).some(value =>
+                        value.toString().toLowerCase().includes(searchTerm)
+                    );
+                });
+                populateTable(tableBody, filteredData);
+            }
+            
+            searchInput1.addEventListener('input', () => filterTable(searchInput1, data1, tableBody1));
+            searchInput2.addEventListener('input', () => filterTable(searchInput2, data2, tableBody2));
+            
+            populateTable(tableBody1, data1);
+            populateTable(tableBody2, data2);
+
+            const tabs = {
+                btn1: document.getElementById('tab-btn-1'),
+                btn2: document.getElementById('tab-btn-2'),
+                content1: document.getElementById('tab-content-1'),
+                content2: document.getElementById('tab-content-2')
+            };
+
+            function switchTab(activeBtn) {
+                Object.values(tabs).forEach(el => {
+                    if (el.tagName === 'BUTTON') {
+                        el.classList.remove('active');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                });
+                
+                if (activeBtn === 'btn1') {
+                    tabs.btn1.classList.add('active');
+                    tabs.content1.classList.remove('hidden');
+                } else {
+                    tabs.btn2.classList.add('active');
+                    tabs.content2.classList.remove('hidden');
+                }
+            }
+
+            tabs.btn1.addEventListener('click', () => switchTab('btn1'));
+            tabs.btn2.addEventListener('click', () => switchTab('btn2'));
+
+            let progressChartInstance, materialTypeChartInstance;
+
+            function renderCharts() {
+                if (progressChartInstance) {
+                    progressChartInstance.destroy();
+                }
+                const progressCounts = data1.reduce((acc, item) => {
+                    acc[item.progress] = (acc[item.progress] || 0) + 1;
+                    return acc;
+                }, {});
+                const progressCtx = document.getElementById('progressChart').getContext('2d');
+                progressChartInstance = new Chart(progressCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(progressCounts),
+                        datasets: [{
+                            label: '材料进展',
+                            data: Object.values(progressCounts),
+                            backgroundColor: ['#3b82f6', '#f97316'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+
+                if (materialTypeChartInstance) {
+                    materialTypeChartInstance.destroy();
+                }
+                const materialTypeCounts = data2.reduce((acc, item) => {
+                    const types = item.type.split(/, |,\s*/);
+                    types.forEach(t => {
+                        acc[t] = (acc[t] || 0) + 1;
+                    });
+                    return acc;
+                }, {});
+
+                const materialTypeCtx = document.getElementById('materialTypeChart').getContext('2d');
+                materialTypeChartInstance = new Chart(materialTypeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(materialTypeCounts),
+                        datasets: [{
+                            label: '厂商数量',
+                            data: Object.values(materialTypeCounts),
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#1e40af',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderCharts();
+        });
+    </script>
+</body>
+</html>
+
+
+

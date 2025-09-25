@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>46系圆柱电池注液工艺分析看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Slate Gray, Off-white) with a subtle Indigo accent. -->
+    <!-- Application Structure Plan: A dashboard-style SPA is chosen for its intuitive user experience. It features top-level filters for targeted data exploration, and a detailed, sortable table for deep comparison. A modal view provides detailed step-by-step information on demand. This structure allows users to seamlessly move from a broad overview to specific details, which is more effective for analysis than a static report layout. -->
+    <!-- Visualization & Content Choices: Report Info -> Manufacturer's injection process. Goal -> Organize & Compare. Viz -> Interactive HTML table. Interaction -> Filtering by company/process, sorting by column. Justification -> Best for structured, multi-attribute data comparison. | Report Info -> Detailed injection steps. Goal -> Inform. Viz -> Modal with detailed text. Interaction -> On-click from table row. Justification -> Provides depth without cluttering the main view. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .table-cell-truncate {
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .sort-asc::after {
+            content: ' ▲';
+            font-size: 0.7em;
+        }
+        .sort-desc::after {
+            content: ' ▼';
+            font-size: 0.7em;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="app" class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">46系圆柱电池注液工艺分析看板</h1>
+            <p class="mt-2 text-slate-600">深入洞察主流厂商在46系圆柱电芯注液工艺中的技术路径与参数选择</p>
+        </header>
+        
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-slate-800 border-b pb-2">数据筛选与控制</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="company-filter" class="block text-sm font-medium text-slate-700">电池厂/整车厂</label>
+                    <select id="company-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="all">所有厂商</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="process-filter" class="block text-sm font-medium text-slate-700">注液工艺</label>
+                    <select id="process-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="all">所有工艺</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <main class="space-y-8">
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-slate-800">工艺数据详览</h2>
+                 <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer" data-sort="company">电池厂/整车厂</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-sort="cellModel">电芯型号</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-sort="process">注液工艺</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-sort="equipment">注液设备信息</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-sort="steps">注液步骤</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer" data-sort="temperature">电解液温度 (°C)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="bg-white divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+                 <p class="text-xs text-slate-500 mt-4">* 点击表头可进行排序。点击表格行可查看详细注液步骤。</p>
+            </div>
+        </main>
+    </div>
+    
+    <div id="details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl transform transition-all">
+            <div class="p-6 modal-content">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h3 id="modal-title" class="text-xl font-semibold text-slate-900">注液步骤详情</h3>
+                    <button id="close-modal-btn" class="text-slate-500 hover:text-slate-800">
+                        <span class="text-2xl">&times;</span>
+                    </button>
+                </div>
+                <div id="modal-body" class="text-slate-700 space-y-2">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const processData = [
+            { id: 1, company: 'Tesla', cellModel: '4680', process: '高速喷射注液', equipment: '自研/定制设备 (供应商保密)', steps: '1. 电芯入站，扫码并称重; 2. 负压抽真空至高真空度; 3. 高速喷射阀按程序分次精准注液; 4. 保持真空进行初步浸润; 5. 破真空并加压，促进电解液渗透; 6. 注液后称重，计算注液量。', temperature: '45-55' },
+            { id: 2, company: 'CATL (宁德时代)', cellModel: '麒麟4680', process: '高压浸润注液', equipment: '先导智能/赢合科技 (定制)', steps: '1. 电芯定位与密封; 2. 抽真空至-95kPa以下; 3. 一次预注液; 4. 高压(>0.8MPa)加压浸润，快速渗透; 5. 泄压并二次补液; 6. 称重检测。', temperature: '40-50' },
+            { id: 3, company: 'EVE (亿纬锂能)', cellModel: '4695', process: '真空-加压组合注液', equipment: '赢合科技/诚捷智能', steps: '1. 自动上料与扫码; 2. 多工位转盘式抽真空; 3. 设定量一次性注入; 4. 保持真空静置数秒; 5. 切换至加压环境，强制浸润; 6. 下料至静置库。', temperature: '35-45' },
+            { id: 4, company: 'BYD (比亚迪)', cellModel: '4680 (规划中)', process: '多段变压注液', equipment: '自研/吉阳智能 (推测)', steps: '1. 电芯预处理（加热）; 2. 阶梯式抽真空，避免极卷变形; 3. 脉冲式多次注液; 4. 注液后进行正负压交替，加速气体排出和液体渗透; 5. 最终称重。', temperature: '50-60' },
+            { id: 5, company: 'CALB (中创新航)', cellModel: '46系列', process: '真空静置注液', equipment: '华冠科技/泓宇自动化', steps: '1. 电芯入站，气密性检测; 2. 抽真空; 3. 一次性注液; 4. 在真空环境下长时间静置（核心工艺），利用毛细作用自然渗透; 5. 破真空; 6. 称重。', temperature: '25-35' },
+            { id: 6, company: 'SVOLT (蜂巢能源)', cellModel: '4680', process: '高速喷射注液', equipment: '先导智能 (深度合作)', steps: '1. 进站扫码; 2. 抽真空; 3. 采用高频喷射阀，多次、多角度喷射; 4. 配合超声波或振动辅助浸润; 5. 加压静置; 6. 称重检测。', temperature: '40-50' },
+            { id: 7, company: 'Sunwoda (正力新能)', cellModel: '46系列', process: '真空-加压组合注液', equipment: '赢合科技/诚捷智能', steps: '1. 电芯自动上料; 2. 抽真空处理; 3. 精密计量泵注液; 4. 快速切换至加压模块; 5. 短时高压浸润; 6. 注液后在线称重。', temperature: '30-40' },
+            { id: 8, company: 'AESC (远景动力)', cellModel: '4680', process: '真空静置注液', equipment: '日韩系设备/国内定制', steps: '1. 严格的来料清洗和干燥; 2. 抽真空至较高真空度; 3. 温控注液; 4. 真空环境下静置，工艺时间较长; 5. 缓慢破真空; 6. 称重并记录数据。', temperature: '25-35' }
+        ];
+
+        const companyFilter = document.getElementById('company-filter');
+        const processFilter = document.getElementById('process-filter');
+        const tableBody = document.getElementById('data-table-body');
+        const modal = document.getElementById('details-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        let currentSort = { column: 'company', order: 'asc' };
+        
+        function parseTemperature(tempRange) {
+            const parts = tempRange.split('-').map(Number);
+            return parts.length > 1 ? (parts[0] + parts[1]) / 2 : parts[0];
+        }
+
+        function populateFilters() {
+            const companies = [...new Set(processData.map(item => item.company))];
+            const processes = [...new Set(processData.map(item => item.process))];
+
+            companies.sort().forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            processes.sort().forEach(process => {
+                const option = document.createElement('option');
+                option.value = process;
+                option.textContent = process;
+                processFilter.appendChild(option);
+            });
+        }
+        
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-500">未找到符合条件的数据</td></tr>`;
+                return;
+            }
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50 cursor-pointer';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${item.company}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${item.cellModel}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${item.process}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 table-cell-truncate" title="${item.equipment}">${item.equipment}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 table-cell-truncate" title="${item.steps}">${item.steps}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${item.temperature}</td>
+                `;
+                row.addEventListener('click', () => showDetailsModal(item));
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function showDetailsModal(item) {
+            modalTitle.textContent = `${item.company} (${item.cellModel}) - 注液步骤详情`;
+            const stepsHtml = item.steps.split('; ').map(step => `<p>${step.trim()}</p>`).join('');
+            modalBody.innerHTML = stepsHtml;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideDetailsModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        function updateSortUI() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (th.dataset.sort === currentSort.column) {
+                    th.classList.add(currentSort.order === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        function filterAndSortData() {
+            const company = companyFilter.value;
+            const process = processFilter.value;
+
+            let filteredData = processData;
+
+            if (company !== 'all') {
+                filteredData = filteredData.filter(item => item.company === company);
+            }
+            if (process !== 'all') {
+                filteredData = filteredData.filter(item => item.process === process);
+            }
+            
+            filteredData.sort((a, b) => {
+                let valA, valB;
+
+                if (currentSort.column === 'temperature') {
+                    valA = parseTemperature(a.temperature);
+                    valB = parseTemperature(b.temperature);
+                } else {
+                    valA = String(a[currentSort.column]).toLowerCase();
+                    valB = String(b[currentSort.column]).toLowerCase();
+                }
+
+                if (valA < valB) {
+                    return currentSort.order === 'asc' ? -1 : 1;
+                }
+                if (valA > valB) {
+                    return currentSort.order === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+            
+            updateSortUI();
+            renderTable(filteredData);
+        }
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.sort;
+                if (currentSort.column === column) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.order = 'asc';
+                }
+                filterAndSortData();
+            });
+        });
+
+        companyFilter.addEventListener('change', filterAndSortData);
+        processFilter.addEventListener('change', filterAndSortData);
+        closeModalBtn.addEventListener('click', hideDetailsModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideDetailsModal();
+            }
+        });
+
+        // Initialize
+        populateFilters();
+        filterAndSortData();
+    });
+    </script>
+</body>
+</html>
+

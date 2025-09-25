@@ -74,6 +74,14 @@ export const batteryReports: Report[] = [
     lastUpdated: "2024-03-13",
     htmlFile: "battery-info-progress.html"
   },
+  {
+    id: "design-1",
+    title: "全球动力电池电芯技术设计",
+    category: "电芯设计",
+    description: "全球动力电池电芯技术与供应链分析看板，涵盖主要制造商的设计方案",
+    lastUpdated: "2024-03-05",
+    htmlFile: "cell-design.html"
+  },
   // 测试技术
   {
     id: "test-1",
@@ -131,7 +139,80 @@ export const batteryReports: Report[] = [
     description: "全球电池行业UV喷涂技术对标报告，涵盖主要厂商的UV涂层应用情况",
     lastUpdated: "2024-03-06",
     htmlFile: "uv-coating.html"
+  },
+  {
+    id: "process-5",
+    title: "三元电芯水分制定标准",
+    category: "工艺技术",
+    description: "三元电芯水分标准技术对标分析，包含各厂商的水分控制技术和标准",
+    lastUpdated: "2024-03-04",
+    htmlFile: "ternary-cell-moisture-standard.html"
+  },
+  {
+    id: "process-6",
+    title: "46系圆柱电池卷绕工艺",
+    category: "工艺技术",
+    description: "主流电池厂及设备商卷绕卷针尺寸与结构调研分析",
+    lastUpdated: "2024-03-03",
+    htmlFile: "winding-needle-structure.html"
+  },
+  {
+    id: "process-7",
+    title: "46系圆柱电池切卷打皱问题",
+    category: "工艺技术",
+    description: "电芯制造过程中正负极片及隔膜打皱问题的分析和解决方案",
+    lastUpdated: "2024-03-02",
+    htmlFile: "wrinkling-process.html"
+  },
+  {
+    id: "process-8",
+    title: "46系列圆柱电池激光工艺",
+    category: "工艺技术",
+    description: "主流厂商在全极耳工艺中的激光应用方案技术对比",
+    lastUpdated: "2024-03-01",
+    htmlFile: "laser-cutting-dust-removal.html"
+  },
+  {
+    id: "process-9",
+    title: "46系圆柱电池注液工艺",
+    category: "工艺技术",
+    description: "电池制造商的注液工艺技术分析，包含详细的工艺参数和流程",
+    lastUpdated: "2024-02-28",
+    htmlFile: "electrolyte-injection.html"
+  },
+  {
+    id: "process-10",
+    title: "46系圆柱电池焊接工艺",
+    category: "工艺技术",
+    description: "电池焊接工艺技术分析平台，涵盖各厂商的焊接方案和技术参数",
+    lastUpdated: "2024-02-27",
+    htmlFile: "welding-process.html"
+  },
+  // 材料技术
+  {
+    id: "material-1",
+    title: "动力电池正极材料",
+    category: "材料技术",
+    description: "动力电池正极材料市场洞察，包含主要材料类型和制造商应用情况",
+    lastUpdated: "2024-02-26",
+    htmlFile: "cathode-materials.html"
+  },
+  {
+    id: "material-2",
+    title: "石墨负极材料",
+    category: "材料技术",
+    description: "石墨负极材料技术分析报告，涵盖材料特性和供应商信息",
+    lastUpdated: "2024-02-25",
+    htmlFile: "graphite-anode.html"
+  },
+  {
+    id: "material-3",
+    title: "硅负极材料技术",
+    category: "材料技术",
+    description: "硅负极材料技术与应用调研，包含材料特性和制造商应用分析",
+    lastUpdated: "2024-02-24",
+    htmlFile: "silicon-anode.html"
   }
 ];
 
-export const categories = ["应用领域", "电芯技术", "测试技术", "工艺技术"];
+export const categories = ["应用领域", "电芯技术", "电芯设计", "测试技术", "工艺技术", "材料技术"];

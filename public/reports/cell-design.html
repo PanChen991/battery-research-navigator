@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球动力电池电芯技术与供应链看板 (更新版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8; /* Warm Off-white */
+            color: #4A4A4A;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            min-width: 4200px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #EAE6E1;
+            padding: 10px 12px;
+            font-size: 14px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #F7F4F0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px; 
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F7F4F0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D3C9BC;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #B9AD9E;
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #6D8B74; /* Muted Accent */
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+        .stat-card {
+            background-color: #FFFFFF;
+            border: 1px solid #EAE6E1;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#3a3a3a]">全球动力电池电芯技术与供应链看板</h1>
+            <p class="mt-3 text-lg text-gray-600">一个用于探索和分析主流电池制造商最新电芯产品与技术的交互式数据库</p>
+        </header>
+
+        <main>
+            <div class="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-gray-200/80 mb-8 sticky top-4 z-20">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="manufacturer-filter" class="block text-sm font-medium text-gray-700 mb-1">按电池厂筛选</label>
+                        <select id="manufacturer-filter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6D8B74] focus:border-[#6D8B74]">
+                            <option value="all">所有厂商</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-medium text-gray-700 mb-1">按电池规格筛选</span>
+                        <div id="spec-filter" class="flex flex-wrap gap-2">
+                            <button class="filter-btn active text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="all">全部</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="圆柱">圆柱</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="软包">软包</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="方形">方形</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="刀片">刀片</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-medium text-gray-700 mb-1">按正极类型筛选</span>
+                        <div id="cathode-filter" class="flex flex-wrap gap-2">
+                            <button class="filter-btn active text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="all">全部</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="LFP">LFP</button>
+                             <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="LMFP">LMFP</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="NMC">NMC</button>
+                            <button class="filter-btn text-sm px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md" data-value="NCMA">NCMA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="stat-card text-center">
+                    <h3 class="text-lg font-semibold text-gray-500">电芯型号总数</h3>
+                    <p id="stat-total-cells" class="text-4xl font-bold text-[#6D8B74] mt-2">0</p>
+                </div>
+                <div class="stat-card text-center">
+                    <h3 class="text-lg font-semibold text-gray-500">平均能量密度 (Wh/kg)</h3>
+                    <p id="stat-avg-density" class="text-4xl font-bold text-[#6D8B74] mt-2">0</p>
+                </div>
+                <div class="stat-card text-center">
+                    <h3 class="text-lg font-semibold text-gray-500">最高能量密度 (Wh/kg)</h3>
+                    <p id="stat-max-density" class="text-4xl font-bold text-[#6D8B74] mt-2">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+                <div class="lg:col-span-3 stat-card">
+                     <h3 class="text-xl font-semibold mb-4 text-center">能量密度 (Wh/kg) 对比</h3>
+                    <div class="chart-container">
+                        <canvas id="densityChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 stat-card">
+                     <h3 class="text-xl font-semibold mb-4 text-center">电池规格分布</h3>
+                    <div class="chart-container">
+                        <canvas id="specChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <h3 class="text-xl font-semibold mb-4">详细数据表</h3>
+                <p class="text-gray-600 mb-4">下表包含各电芯产品的详细技术参数和供应链信息。您可以在表格区域内水平滚动以查看所有38列数据。</p>
+                <div class="table-container">
+                    <table id="data-table">
+                        <thead id="table-head">
+                        </thead>
+                        <tbody id="table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+        
+        <footer class="text-center mt-12 py-6 border-t border-gray-200">
+            <p class="text-gray-500">数据来源公开信息，仅供研究参考。最后更新于 2025年9月。</p>
+        </footer>
+    </div>
+
+    <script>
+        const cellData = [
+            {
+                "电池厂": "CATL (宁德时代)", "电芯名称": "神行超充电池", "电池规格": "方形", "应用领域": "乘用电动车",
+                "性能亮点": "4C超充, 10分钟充电400公里, -10℃低温性能优异", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "200",
+                "新技术导入": "超电子网正极, 多梯度分层极片, 新型超导电解液", "发布时间": "2023-08", "量产时间": "2023-Q4",
+                "正极类型": "LFP", "正极供应商": "CATL/德方纳米", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "快充改性石墨", "石墨供应商": "CATL/璞泰来/贝特瑞", "硅的类型": "不含硅", "硅供应商": "N/A",
+                "电解液类型": "低粘度快充型电解液", "电解液供应商": "CATL/天赐材料", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "阿维塔, 奇瑞"
+            },
+            {
+                "电池厂": "CATL (宁德时代)", "电芯名称": "麒麟电池 (CTP 3.0)", "电池规格": "方形", "应用领域": "高端乘用电动车",
+                "性能亮点": "系统集成度高, 体积利用率72%, 系统能量密度高, 安全性强", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "255",
+                "新技术导入": "CTP 3.0, 电芯大面冷却技术", "发布时间": "2022-06", "量产时间": "2023-Q1",
+                "正极类型": "NMC", "正极供应商": "CATL/容百科技", "正极粘结剂类型": "PVDF", "正极粘结剂供应商": "苏威/阿科玛",
+                "正极导电剂类型": "碳纳米管(CNT)", "正极导电剂供应商": "天奈科技/集盛",
+                "铝箔类型": "信息未公开", "铝箔供应商": "鼎胜新材", "石墨类型": "人造石墨", "石墨供应商": "CATL/璞泰来",
+                "硅的类型": "氧化亚硅(SiO-C)", "硅供应商": "贝特瑞/杉杉", "电解液类型": "高电压电解液", "电解液供应商": "CATL/新宙邦",
+                "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开", "负极粘结剂类型": "SBR/CMC", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "诺德股份", "隔膜类型": "涂覆隔膜", "隔膜供应商": "恩捷股份/星源材质",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "极氪, 问界, 理想"
+            },
+            {
+                "电池厂": "BYD (比亚迪)", "电芯名称": "刀片电池", "电池规格": "刀片", "应用领域": "乘用电动车",
+                "性能亮点": "高安全性(通过针刺实验), CTP结构, 寿命长", "容量(Ah)": "138.5", "能量密度(Wh/kg)": "166",
+                "新技术导入": "CTP(Cell to Pack), 长电芯设计", "发布时间": "2020-03", "量产时间": "2020",
+                "正极类型": "LFP", "正极供应商": "比亚迪(自供)", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "比亚迪(自供)",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "比亚迪(自供)", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨", "石墨供应商": "比亚迪(自供)", "硅的类型": "不含硅", "硅供应商": "N/A",
+                "电解液类型": "LFP电解液", "电解液供应商": "比亚迪(自供)", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "比亚迪(自供)",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "比亚迪全系, 特斯拉(柏林), 丰田, 福特"
+            },
+            {
+                "电池厂": "亿纬锂能 (EVE)", "电芯名称": "4695大圆柱电池", "电池规格": "圆柱", "应用领域": "高端乘用电动车",
+                "性能亮点": "9分钟快充(10-80%), 全生命周期NTP, 能量密度高", "容量(Ah)": "23-25(估算)", "能量密度(Wh/kg)": "285",
+                "新技术导入": "46系大圆柱, 全极耳技术, CTP(Cell to Pack)", "发布时间": "2022-12", "量产时间": "2024",
+                "正极类型": "NMC", "正极供应商": "容百科技/当升科技", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "贝特瑞/杉杉", "硅的类型": "氧化亚硅(SiO-C)", "硅供应商": "贝特瑞/天目先导",
+                "电解液类型": "高镍/硅碳体系电解液", "电解液供应商": "天赐材料/新宙邦", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "宝马(Neue Klasse), 江淮汽车"
+            },
+            {
+                "电池厂": "中创新航 (CALB)", "电芯名称": "顶流圆柱电池", "电池规格": "圆柱", "应用领域": "高端乘用电动车",
+                "性能亮点": "4C-6C快充, 结构创新提升能量密度和安全", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "290",
+                "新技术导入": "顶流结构(Top Stream Structure), 全极耳", "发布时间": "2022-10", "量产时间": "2024",
+                "正极类型": "NMC", "正极供应商": "信息未公开", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "信息未公开", "硅的类型": "信息未公开", "硅供应商": "信息未公开",
+                "电解液类型": "快充型电解液", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "小鹏, 广汽"
+            },
+            {
+                "电池厂": "远景动力 (AESC)", "电芯名称": "46系大圆柱", "电池规格": "圆柱", "应用领域": "高端乘用电动车",
+                "性能亮点": "高能量密度, 低内阻, 为宝马新平台设计", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "300",
+                "新技术导入": "46系大圆柱, 全极耳", "发布时间": "2022(合作宣布)", "量产时间": "2026",
+                "正极类型": "NMC", "正极供应商": "信息未公开", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "信息未公开", "硅的类型": "信息未公开", "硅供应商": "信息未公开",
+                "电解液类型": "高镍电解液", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "宝马(Neue Klasse)"
+            },
+            {
+                "电池厂": "蜂巢能源 (SVOLT)", "电芯名称": "龙鳞甲电池", "电池规格": "方形", "应用领域": "乘用电动车",
+                "性能亮点": "底部换热, 热电分离, 安全性高", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "195",
+                "新技术导入": "热电分离设计, CTP结构", "发布时间": "2022-12", "量产时间": "2023-Q3",
+                "正极类型": "LFP", "正极供应商": "德方纳米/常州锂源", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨", "石墨供应商": "信息未公开", "硅的类型": "不含硅", "硅供应商": "N/A",
+                "电解液类型": "信息未公开", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "长城汽车(欧拉)"
+            },
+            {
+                "电池厂": "国轩高科 (Gotion)", "电芯名称": "启晨LMFP电池", "电池规格": "方形", "应用领域": "乘用电动车",
+                "性能亮点": "不含贵金属, 能量密度优于标准LFP, 低温性能好", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "240",
+                "新技术导入": "磷酸锰铁锂(LMFP)正极, JTM+ Leishi换电技术", "发布时间": "2023-05", "量产时间": "2024",
+                "正极类型": "LMFP", "正极供应商": "国轩高科(自供)", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨", "石墨供应商": "信息未公开", "硅的类型": "不含硅", "硅供应商": "N/A",
+                "电解液类型": "LMFP电解液", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "大众汽车(标准电芯)"
+            },
+            {
+                "电池厂": "欣旺达 (Sunwoda)", "电芯名称": "闪充电池SFC480", "电池规格": "方形", "应用领域": "乘用电动车",
+                "性能亮点": "480kW快充, 10分钟充电80%, 700km续航", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "260",
+                "新技术导入": "4C快充材料体系, CTP 3.0", "发布时间": "2022-11", "量产时间": "2023-Q4",
+                "正极类型": "NMC", "正极供应商": "信息未公开", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "快充改性石墨", "石墨供应商": "信息未公开", "硅的类型": "少量添加", "硅供应商": "信息未公开",
+                "电解液类型": "快充型电解液", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "小鹏汽车, 吉利"
+            },
+             {
+                "电池厂": "孚能科技 (Farasis)", "电芯名称": "SPS大软包电池", "电池规格": "软包", "应用领域": "中高端乘用电动车",
+                "性能亮点": "系统能量密度高, 兼容多化学体系, 400V/800V平台", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "240",
+                "新技术导入": "大软包电芯(SPS), 半固态技术路线", "发布时间": "2022-09", "量产时间": "2023",
+                "正极类型": "NMC", "正极供应商": "信息未公开", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "信息未公开", "硅的类型": "信息未公开", "硅供应商": "信息未公开",
+                "电解液类型": "高镍电解液", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "奔驰, 广汽, 吉利"
+            },
+            {
+                "电池厂": "特斯拉 (TESLA)", "电芯名称": "4680", "电池规格": "圆柱", "应用领域": "乘用电动车/皮卡",
+                "性能亮点": "低成本, 高性能, 结构化电池包", "容量(Ah)": "~26", "能量密度(Wh/kg)": "280",
+                "新技术导入": "干法电极(DBE), 全极耳(Tabless)设计", "发布时间": "2020-09", "量产时间": "2022",
+                "正极类型": "高镍NCMA", "正极供应商": "特斯拉(自研), LG, 松下", "正极粘结剂类型": "干法粘结剂", "正极粘结剂供应商": "特斯拉(自研)",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "松下/LG/特斯拉", "硅的类型": "信息未公开", "硅供应商": "信息未公开",
+                "电解液类型": "新型添加剂电解液", "电解液供应商": "特斯拉(自研)", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "干法粘结剂", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "特斯拉(自研)",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "特斯拉(Model Y, Cybertruck)"
+            },
+            {
+                "电池厂": "LG新能源 (LGES)", "电芯名称": "Ultium Pouch Cell", "电池规格": "软包", "应用领域": "乘用电动车",
+                "性能亮点": "低钴含量, 高能量密度, 模组设计灵活", "容量(Ah)": "100+", "能量密度(Wh/kg)": "250",
+                "新技术导入": "NCMA四元正极材料", "发布时间": "2020", "量产时间": "2021",
+                "正极类型": "NCMA", "正极供应商": "L&F/浦项化学", "正极粘结剂类型": "PVDF", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨+硅", "石墨供应商": "信息未公开", "硅的类型": "氧化亚硅(SiO-C)", "硅供应商": "信息未公开",
+                "电解液类型": "高镍电解液", "电解液供应商": "Enchem", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "SBR/CMC", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "安全增强隔膜(SRS)", "隔膜供应商": "LG化学/WCP",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "通用汽车(GM), 现代, 奔驰, 奇瑞"
+            },
+             {
+                "电池厂": "松下 (Panasonic)", "电芯名称": "4680", "电池规格": "圆柱", "应用领域": "乘用电动车",
+                "性能亮点": "高能量密度, 性能稳定, 持续改进", "容量(Ah)": "~26", "能量密度(Wh/kg)": "280",
+                "新技术导入": "4680尺寸, 优化硅碳负极技术", "发布时间": "2022", "量产时间": "2024",
+                "正极类型": "高镍NCA", "正极供应商": "住友金属矿山", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "硅碳负极", "石墨供应商": "信息未公开", "硅的类型": "氧化亚硅(SiO-C)", "硅供应商": "信越化学",
+                "电解液类型": "高镍电解液", "电解液供应商": "UBE/三菱化学", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "旭化成/东丽",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "特斯拉"
+            },
+            {
+                "电池厂": "瑞浦兰钧 (REPT)", "电芯名称": "问顶电池", "电池规格": "方形", "应用领域": "乘用电动车, 储能",
+                "性能亮点": "体积能量密度高(>450Wh/L), 结构创新", "容量(Ah)": "信息未公开", "能量密度(Wh/kg)": "260",
+                "新技术导入": "“问顶”结构技术", "发布时间": "2023-04", "量产时间": "2023",
+                "正极类型": "NMC", "正极供应商": "信息未公开", "正极粘结剂类型": "信息未公开", "正极粘结剂供应商": "信息未公开",
+                "正极导电剂类型": "信息未公开", "正极导电剂供应商": "信息未公开", "铝箔类型": "信息未公开", "铝箔供应商": "信息未公开",
+                "石墨类型": "人造石墨", "石墨供应商": "信息未公开", "硅的类型": "信息未公开", "硅供应商": "信息未公开",
+                "电解液类型": "信息未公开", "电解液供应商": "信息未公开", "负极导电剂类型": "信息未公开", "负极导电剂供应商": "信息未公开",
+                "负极粘结剂类型": "信息未公开", "负极粘结剂组合方式": "信息未公开", "负极粘结剂供应商": "信息未公开",
+                "铜箔类型": "信息未公开", "铜箔供应商": "信息未公开", "隔膜类型": "信息未公开", "隔膜供应商": "信息未公开",
+                "胶带类型": "信息未公开", "胶带供应商": "信息未公开", "绝缘胶类型": "信息未公开", "绝缘胶供应商": "信息未公开",
+                "该电芯产品供应客户": "Stellantis集团, 零跑"
+            }
+        ];
+        
+        let densityChart, specChart;
+        let filteredData = [...cellData];
+        const tableHeaders = Object.keys(cellData[0]);
+
+        const filters = {
+            manufacturer: 'all',
+            spec: 'all',
+            cathode: 'all'
+        };
+
+        function populateFilters() {
+            const manufacturerFilter = document.getElementById('manufacturer-filter');
+            const manufacturers = [...new Set(cellData.map(item => item['电池厂']))];
+            manufacturers.sort().forEach(m => {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = m;
+                manufacturerFilter.appendChild(option);
+            });
+        }
+        
+        function renderTable() {
+            const tableHead = document.getElementById('table-head');
+            const tableBody = document.getElementById('table-body');
+            
+            tableHead.innerHTML = '';
+            let headerRow = '<tr>';
+            tableHeaders.forEach(header => {
+                headerRow += `<th>${header}</th>`;
+            });
+            headerRow += '</tr>';
+            tableHead.innerHTML = headerRow;
+
+            tableBody.innerHTML = '';
+            filteredData.forEach(row => {
+                let rowHtml = '<tr>';
+                tableHeaders.forEach(header => {
+                    rowHtml += `<td>${row[header]}</td>`;
+                });
+                rowHtml += '</tr>';
+                tableBody.innerHTML += rowHtml;
+            });
+        }
+        
+        function updateStats() {
+            const totalCells = filteredData.length;
+            document.getElementById('stat-total-cells').textContent = totalCells;
+
+            if (totalCells > 0) {
+                const densities = filteredData.map(d => parseFloat(d['能量密度(Wh/kg)'])).filter(v => !isNaN(v));
+                if (densities.length > 0) {
+                    const avgDensity = (densities.reduce((a, b) => a + b, 0) / densities.length).toFixed(1);
+                    const maxDensity = Math.max(...densities).toFixed(1);
+                    document.getElementById('stat-avg-density').textContent = avgDensity;
+                    document.getElementById('stat-max-density').textContent = maxDensity;
+                } else {
+                     document.getElementById('stat-avg-density').textContent = 'N/A';
+                     document.getElementById('stat-max-density').textContent = 'N/A';
+                }
+            } else {
+                document.getElementById('stat-avg-density').textContent = '0';
+                document.getElementById('stat-max-density').textContent = '0';
+            }
+        }
+        
+        function renderCharts() {
+            const densityCtx = document.getElementById('densityChart').getContext('2d');
+            const specCtx = document.getElementById('specChart').getContext('2d');
+
+            const labels = filteredData.map(d => `${d['电池厂']} - ${d['电芯名称']}`);
+            const densityValues = filteredData.map(d => parseFloat(d['能量密度(Wh/kg)']));
+            
+            if (densityChart) densityChart.destroy();
+            densityChart = new Chart(densityCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '能量密度 (Wh/kg)',
+                        data: densityValues,
+                        backgroundColor: 'rgba(109, 139, 116, 0.7)',
+                        borderColor: 'rgba(109, 139, 116, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                             grid: { color: '#F0F0F0' }
+                        },
+                        y: {
+                             grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${context.raw} Wh/kg`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const specCounts = filteredData.reduce((acc, curr) => {
+                acc[curr['电池规格']] = (acc[curr['电池规格']] || 0) + 1;
+                return acc;
+            }, {});
+
+            if (specChart) specChart.destroy();
+            specChart = new Chart(specCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(specCounts),
+                    datasets: [{
+                        data: Object.values(specCounts),
+                        backgroundColor: [
+                            'rgba(109, 139, 116, 0.8)',
+                            'rgba(211, 201, 188, 0.8)',
+                            'rgba(185, 173, 158, 0.8)',
+                            'rgba(119, 110, 101, 0.8)',
+                            'rgba(247, 244, 240, 0.8)'
+                        ],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+        
+        function applyFilters() {
+            filteredData = cellData.filter(item => {
+                const manufacturerMatch = filters.manufacturer === 'all' || item['电池厂'] === filters.manufacturer;
+                const specMatch = filters.spec === 'all' || item['电池规格'] === filters.spec;
+                const cathodeMatch = filters.cathode === 'all' || item['正极类型'].includes(filters.cathode);
+                return manufacturerMatch && specMatch && cathodeMatch;
+            });
+
+            renderTable();
+            updateStats();
+            renderCharts();
+        }
+
+        document.getElementById('manufacturer-filter').addEventListener('change', (e) => {
+            filters.manufacturer = e.target.value;
+            applyFilters();
+        });
+
+        document.getElementById('spec-filter').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filters.spec = e.target.dataset.value;
+                document.querySelectorAll('#spec-filter .filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                applyFilters();
+            }
+        });
+        
+        document.getElementById('cathode-filter').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filters.cathode = e.target.dataset.value;
+                document.querySelectorAll('#cathode-filter .filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                applyFilters();
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            populateFilters();
+            applyFilters();
+        });
+    </script>
+</body>
+</html>

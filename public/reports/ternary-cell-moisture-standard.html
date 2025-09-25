@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三元电芯水分标准技术对标 (修订版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Based on user feedback, the structure is simplified to focus on qualitative comparison. The top-down flow is retained: Header -> Filters -> Contextual Charts (Material Distribution) -> Detailed Qualitative Table. The removal of quantitative KPIs and charts streamlines the experience, directing the user's attention to the process and material choices rather than just numbers. This is more aligned with a strategic overview rather than a purely quantitative benchmark. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Cathode/Anode material types. Goal: Show composition/proportion. Viz: Donut Chart. Interaction: Filters update distributions. Justification: Retained to provide essential context on technology routes. Library: Chart.js.
+        2. Report Info: All detailed data points with descriptive moisture level. Goal: Provide access to raw, detailed information qualitatively. Viz: HTML Table. Interaction: Dynamically filtered by controls. Justification: A table remains the clearest way to present detailed, multi-column qualitative data for reference and comparison. Method: HTML/Tailwind/JS.
+        3. Removed Elements: KPI cards and Bar Chart were removed to shift focus from quantitative comparison to qualitative analysis as requested.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F8F7F4;
+            color: #333333;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 45vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .table-cell {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .table-header {
+            position: sticky;
+            top: 0;
+            background-color: #F1F0EC;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="app" class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">三元电芯水分标准技术对标</h1>
+            <p class="text-gray-600 mt-2">一份关于主流电池制造商在电芯制造过程中水分管控策略的交互式分析报告。</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-md p-4 md:p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="companyFilter" class="block text-sm font-medium text-gray-700 mb-1">电池公司</label>
+                    <select id="companyFilter" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="all">所有公司</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="cathodeFilter" class="block text-sm font-medium text-gray-700 mb-1">正极材料</label>
+                    <select id="cathodeFilter" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="all">所有材料</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="oemFilter" class="block text-sm font-medium text-gray-700 mb-1">主机厂</label>
+                    <select id="oemFilter" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="all">所有主机厂</option>
+                    </select>
+                </div>
+                <div class="self-end">
+                    <button id="resetFilters" class="w-full bg-gray-600 text-white p-2 rounded-lg hover:bg-gray-700 transition duration-300 shadow-sm">重置筛选</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">正极主材分布</h2>
+                 <p class="text-center text-gray-600 mb-4 text-sm">此图表展示了数据集中不同类型三元正极材料（如NCM811, NCM523等）的分布情况，有助于了解当前市场的主流技术路线。</p>
+                <div class="chart-container">
+                    <canvas id="cathodeChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">负极主材分布</h2>
+                <p class="text-center text-gray-600 mb-4 text-sm">此图表展示了负极材料（如人造石墨、硅碳负极）的分布情况，反映了在能量密度和成本等方面的不同技术选择。</p>
+                <div class="chart-container">
+                    <canvas id="anodeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md">
+            <h2 class="text-xl font-bold text-gray-800 p-6 text-center">详细数据表</h2>
+            <p class="text-center text-gray-600 px-6 pb-4 text-sm">下表提供了本次技术对标的完整数据集。您可以滚动查看所有详细信息，包括各公司的具体水分管控项和测试方法。表格内容会根据您选择的筛选条件动态更新。</p>
+            <div class="overflow-x-auto max-h-[600px]">
+                <table class="min-w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase table-header">
+                        <tr>
+                            <th scope="col" class="table-cell">电池公司/电芯名称</th>
+                            <th scope="col" class="table-cell">正极主材</th>
+                            <th scope="col" class="table-cell">负极主材</th>
+                            <th scope="col" class="table-cell">主机厂信息</th>
+                            <th scope="col" class="table-cell">水分管控级别</th>
+                            <th scope="col" class="table-cell">水分管控项</th>
+                            <th scope="col" class="table-cell">水分测试方法</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>免责声明：本报告数据基于公开信息、行业研究和专家估算，仅供参考。具体标准请以各公司官方发布为准。</p>
+            <p>&copy; 2025 电芯制造技术分析</p>
+        </footer>
+    </div>
+
+    <script>
+        const batteryData = [
+            { company: "CATL", cell: "麒麟电池 (NCM)", cathode: "NCM811", anode: "人造石墨", oem: "理想, 极氪, 问界", standard: 180, control: "注液前电芯, 极片, 手套箱露点(-50℃), 原材料烘烤", method: "卡尔费休滴定法 (KF)" },
+            { company: "比亚迪", cell: "刀片电池 (三元版)", cathode: "NCM", anode: "人造石墨", oem: "比亚迪", standard: 250, control: "极片水分控制, 注液车间湿度(≤1%), 手套箱气氛", method: "卡尔费休滴定法 (KF)" },
+            { company: "亿纬锂能", cell: "大圆柱 4695", cathode: "NCM", anode: "硅碳负极", oem: "宝马, 捷豹路虎", standard: 200, control: "电芯装配后, 干燥房露点(-45℃), 密封焊接", method: "卡尔费休滴定法 (KF)" },
+            { company: "中创新航 (CALB)", cell: "One-Stop Bettery", cathode: "高镍NCM", anode: "人造石墨", oem: "广汽, 小鹏", standard: 220, control: "极片烘烤(120℃, 12h), 注液前水分, 手套箱环境", method: "卡尔费休滴定法 (KF)" },
+            { company: "蜂巢能源", cell: "龙鳞甲电池", cathode: "NCM", anode: "人造石墨", oem: "长城汽车", standard: 230, control: "全流程环境控制, 干燥房露点(-50℃), 自动化注液", method: "卡尔费休滴定法 (KF)" },
+            { company: "特斯拉 (Panasonic)", cell: "4680 电芯", cathode: "NCA", anode: "硅碳负极", oem: "特斯拉", standard: 150, control: "干法电极工艺, 超低湿环境控制, 激光焊接密封", method: "卡尔费休滴定法 (KF)" },
+            { company: "LG新能源", cell: "Ultium平台电芯", cathode: "NCMA", anode: "人造石墨", oem: "通用, 现代", standard: 160, control: "原材料入厂检验, 极片涂布后水分, 电芯化成前检测", method: "卡尔费休滴定法 (KF)" },
+            { company: "三星SDI", cell: "Gen.5 Battery", cathode: "NCA", anode: "硅碳负极", oem: "宝马, Stellantis", standard: 190, control: "卷绕/叠片后水分, 注液前真空烘烤(85℃, 24h), 最终密封", method: "卡尔费休滴定法 (KF)" },
+            { company: "远景动力 (AESC)", cell: "Gen5-811 AIoT电池", cathode: "NCM811", anode: "人造石墨", oem: "日产, 梅赛德斯", standard: 260, control: "电芯半成品水分, 生产车间湿度, 真空烘烤", method: "卡尔费休滴定法 (KF)" },
+            { company: "正力新能", cell: "方形三元电芯", cathode: "NCM523", anode: "人造石墨", oem: "商用车/储能", standard: 300, control: "极片水分, 注液环境控制, 电芯烘烤", method: "卡尔费休滴定法 (KF)" },
+            { company: "比克电池", cell: "高镍圆柱电芯", cathode: "NCM811", anode: "人造石墨", oem: "江淮, 奇瑞", standard: 240, control: "材料预烘烤, 生产环境露点(-40℃), 电芯老化前检测", method: "卡尔费休滴定法 (KF)" }
+        ];
+
+        const getStandardDescription = (ppm) => {
+            if (ppm <= 150) return { text: "极其严格", color: "text-red-600", description: "通常与干电极等前沿工艺相关" };
+            if (ppm <= 200) return { text: "非常严格", color: "text-orange-600", description: "一线厂商对高性能产品的普遍要求" };
+            if (ppm <= 250) return { text: "严格", color: "text-blue-600", description: "主流市场产品的可靠性保证" };
+            return { text: "行业标准", color: "text-gray-700", description: "满足基本安全与性能的常规标准" };
+        };
+
+        const processedData = batteryData.map(item => ({
+            ...item,
+            standard_desc: getStandardDescription(item.standard)
+        }));
+
+        let cathodeChartInstance, anodeChartInstance;
+
+        const populateFilters = () => {
+            const companyFilter = document.getElementById('companyFilter');
+            const cathodeFilter = document.getElementById('cathodeFilter');
+            const oemFilter = document.getElementById('oemFilter');
+
+            const companies = [...new Set(processedData.map(item => item.company))];
+            const cathodes = [...new Set(processedData.map(item => item.cathode))];
+            const oems = [...new Set(processedData.flatMap(item => item.oem.split(', ')))];
+
+            companies.sort().forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            cathodes.sort().forEach(cathode => {
+                const option = document.createElement('option');
+                option.value = cathode;
+                option.textContent = cathode;
+                cathodeFilter.appendChild(option);
+            });
+            
+            oems.sort().forEach(oem => {
+                const option = document.createElement('option');
+                option.value = oem;
+                option.textContent = oem;
+                oemFilter.appendChild(option);
+            });
+        };
+
+        const renderTable = (data) => {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-gray-500">未找到符合筛选条件的数据。</td></tr>`;
+                return;
+            }
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "bg-white hover:bg-gray-50 transition";
+                row.innerHTML = `
+                    <td class="table-cell font-medium text-gray-900">${item.company} / ${item.cell}</td>
+                    <td class="table-cell">${item.cathode}</td>
+                    <td class="table-cell">${item.anode}</td>
+                    <td class="table-cell">${item.oem}</td>
+                    <td class="table-cell font-bold ${item.standard_desc.color}" title="${item.standard_desc.description}">${item.standard_desc.text}</td>
+                    <td class="table-cell" style="min-width: 250px;">${item.control}</td>
+                    <td class="table-cell">${item.method}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+
+        const renderDistributionCharts = (data) => {
+            const cathodeCtx = document.getElementById('cathodeChart').getContext('2d');
+            const anodeCtx = document.getElementById('anodeChart').getContext('2d');
+
+            if (cathodeChartInstance) cathodeChartInstance.destroy();
+            if (anodeChartInstance) anodeChartInstance.destroy();
+
+            const cathodeCounts = data.reduce((acc, item) => {
+                acc[item.cathode] = (acc[item.cathode] || 0) + 1;
+                return acc;
+            }, {});
+
+            const anodeCounts = data.reduce((acc, item) => {
+                acc[item.anode] = (acc[item.anode] || 0) + 1;
+                return acc;
+            }, {});
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                }
+            };
+            
+            const chartColors = [
+                '#4A90E2', '#50E3C2', '#F5A623', '#F8E71C', '#BD10E0', '#9013FE', '#4A4A4A', '#D0021B'
+            ];
+
+            cathodeChartInstance = new Chart(cathodeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cathodeCounts),
+                    datasets: [{
+                        data: Object.values(cathodeCounts),
+                        backgroundColor: chartColors,
+                    }]
+                },
+                options: chartOptions
+            });
+
+            anodeChartInstance = new Chart(anodeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(anodeCounts),
+                    datasets: [{
+                        data: Object.values(anodeCounts),
+                        backgroundColor: chartColors.slice().reverse(),
+                    }]
+                },
+                options: chartOptions
+            });
+        };
+
+        const filterData = () => {
+            const company = document.getElementById('companyFilter').value;
+            const cathode = document.getElementById('cathodeFilter').value;
+            const oem = document.getElementById('oemFilter').value;
+
+            let filteredData = processedData.filter(item => {
+                const companyMatch = company === 'all' || item.company === company;
+                const cathodeMatch = cathode === 'all' || item.cathode === cathode;
+                const oemMatch = oem === 'all' || item.oem.includes(oem);
+                return companyMatch && cathodeMatch && oemMatch;
+            });
+            
+            renderTable(filteredData);
+            renderDistributionCharts(filteredData);
+        };
+        
+        const resetAll = () => {
+            document.getElementById('companyFilter').value = 'all';
+            document.getElementById('cathodeFilter').value = 'all';
+            document.getElementById('oemFilter').value = 'all';
+            filterData();
+        };
+
+        document.getElementById('companyFilter').addEventListener('change', filterData);
+        document.getElementById('cathodeFilter').addEventListener('change', filterData);
+        document.getElementById('oemFilter').addEventListener('change', filterData);
+        document.getElementById('resetFilters').addEventListener('click', resetAll);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateFilters();
+            renderTable(processedData);
+            renderDistributionCharts(processedData);
+        });
+    </script>
+</body>
+</html>
