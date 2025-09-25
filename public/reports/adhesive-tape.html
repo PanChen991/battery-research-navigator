@@ -44,6 +44,17 @@
 <body class="bg-gray-50 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8">
+        
+        <!-- 返回按钮 -->
+        <div class="mb-4">
+            <button onclick="window.close(); if(window.opener){window.opener.focus();} else {window.location.href='/'}" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回主页
+            </button>
+        </div>
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">动力电池胶带技术与市场调研报告</h1>
             <p class="text-md text-gray-600 mt-2">一份关于电芯内部关键胶带材料的交互式分析</p>

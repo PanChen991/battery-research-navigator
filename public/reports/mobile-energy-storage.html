@@ -75,6 +75,17 @@
 </head>
 <body>
     <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- 返回按钮 -->
+        <div class="mb-4">
+            <button onclick="window.close(); if(window.opener){window.opener.focus();} else {window.location.href='/'}" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回主页
+            </button>
+        </div>
         <header class="text-center mb-10">
             <h1 class="text-4xl font-bold text-[#5c4b37]">移动储能行业市场洞察</h1>
             <p class="text-lg text-gray-600 mt-2">一份关于客户需求、竞争格局及全球法规的综合分析报告</p>
