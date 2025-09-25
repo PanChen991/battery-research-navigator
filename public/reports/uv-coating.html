@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球电池行业UV喷涂技术对标报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate & Amber -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard. The core is a dynamic data table that allows for filtering and searching, which is the most effective way for a user to perform competitive analysis. Above the table, key metrics (KPI cards) provide an at-a-glance summary. A bar chart visualizes the distribution of identified UV coating applications by company, updating in real-time as the user filters the data. This structure was chosen to provide both a high-level overview and deep-dive capabilities, facilitating quick insights and detailed exploration of the competitive landscape in a single, intuitive view. -->
+    <!-- Visualization & Content Choices: 
+    1. Report Info: Overall count of companies and data points. Goal: Inform. Viz/Method: KPI Cards (HTML/Tailwind). Interaction: None. Justification: Provides immediate context of the dataset's scope.
+    2. Report Info: Company-specific data entries. Goal: Organize/Compare. Viz/Method: Interactive HTML Table. Interaction: Text search and dropdown filtering. Justification: Allows users to isolate specific competitors or technologies, which is the primary task for a benchmarking report.
+    3. Report Info: Number of applications per company. Goal: Compare. Viz/Method: Bar Chart (Chart.js/Canvas). Interaction: Chart updates based on table filter. Justification: Offers a quick visual comparison of technology adoption volume among competitors.
+    All choices support the dashboard structure, are implemented with approved libraries (No SVG/Mermaid), and are designed for clarity and user interaction. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
+            background-color: #f8fafc;
+        }
+        .table-cell-truncate {
+            max-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">全球电池行业UV喷涂技术对标报告</h1>
+            <p class="mt-2 text-md md:text-lg text-slate-600">一份关于电芯制造中UV涂层绝缘技术的互动式分析</p>
+        </header>
+
+        <main>
+            
+            <!-- Controls and Chart Section -->
+            <section class="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold text-slate-900 mb-4">数据筛选与分析</h2>
+                    <p class="text-slate-600 mb-6 text-sm">使用下方的筛选器来精确查找您感兴趣的信息。表格和图表将会根据您的选择动态更新。</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="company-filter" class="block text-sm font-medium text-slate-700">按电池公司筛选</label>
+                            <select id="company-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md">
+                                <option value="all">所有公司</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="search-input" class="block text-sm font-medium text-slate-700">关键词搜索</label>
+                            <input type="text" id="search-input" placeholder="例如: 4680, LFP, 戴姆勒..." class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
+                     <h2 class="text-xl font-semibold text-slate-900 mb-2">各公司技术应用分布</h2>
+                     <div class="chart-container">
+                        <canvas id="companyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Table Section -->
+            <section class="bg-white rounded-xl shadow-md overflow-x-auto">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-slate-900">详细对标数据</h2>
+                    <p class="mt-1 text-sm text-slate-600">下表汇总了各主要电池制造商在电芯UV喷涂技术方面的应用情况、合作伙伴及相关技术细节。</p>
+                </div>
+                <table class="w-full text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">电池公司名称</th>
+                            <th scope="col" class="px-6 py-3">电芯信息</th>
+                            <th scope="col" class="px-6 py-3">主机厂信息</th>
+                            <th scope="col" class="px-6 py-3">合作关键信息</th>
+                            <th scope="col" class="px-6 py-3">发布时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Data rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+<script>
+    const reportData = [
+        {
+            company: "CATL (宁德时代)",
+            cellInfo: "麒麟电池 (CTP 3.0), 方形磷酸铁锂/三元锂",
+            oem: "理想, 极氪, 问界, 小米",
+            keyInfo: "电芯侧面进行UV喷涂绝缘。绝缘耐压 > 4000V DC。油墨供应商可能为国内龙头企业如广信材料或容大感光；设备供应商为具备高精度喷涂及快速固化能力的厂商，如德马格、诺信。",
+            date: "2022-06"
+        },
+        {
+            company: "CATL (宁德时代)",
+            cellInfo: "神行超充电池 (4C LFP)",
+            oem: "阿维塔, 奇瑞",
+            keyInfo: "强调快充性能，对电芯间绝缘和热管理要求极高。UV涂层提供基础绝缘并配合气凝胶隔热。通过了严苛的过充、针刺等安全测试。",
+            date: "2023-08"
+        },
+        {
+            company: "亿纬锂能 (EVE Energy)",
+            cellInfo: "46系列大圆柱电池 (4680, 4695)",
+            oem: "宝马 (新世代平台), 其他潜在客户",
+            keyInfo: "大圆柱电芯侧壁采用UV固化绝缘涂层。与宝马合作要求极高的耐久性和一致性。UV设备来自欧洲顶级供应商如IST Metz或贺利氏(Heraeus)。油墨要求高附着力和耐电解液腐蚀性。",
+            date: "2022-09"
+        },
+        {
+            company: "亿纬锂能 (EVE Energy)",
+            cellInfo: "方形磷酸铁锂电池 (LF560K)",
+            oem: "储能系统集成商",
+            keyInfo: "应用于大型储能系统，对成本和长循环寿命要求高。UV涂层作为标准绝缘方案，具有成本和效率优势。供应商体系逐步国产化以控制成本。",
+            date: "2023-03"
+        },
+        {
+            company: "新能安 (Ampace)",
+            cellInfo: "高功率锂离子软包/方形电芯",
+            oem: "DJI (大疆), TTI (创科实业)",
+            keyInfo: "专注于无人机、电动工具等高倍率放电领域。电芯表面采用UV绝缘涂层以适应紧凑和不规则的电池包空间。强调涂层的抗振动和耐磨损性能。",
+            date: "2021-11"
+        },
+        {
+            company: "远景动力 (Envision AESC)",
+            cellInfo: "软包三元锂电池",
+            oem: "日产 (Nissan), 奔驰 (Mercedes-Benz)",
+            keyInfo: "作为日产的长期供应商，其工艺成熟稳定。软包电芯外表面喷涂UV绝缘层，用于电芯堆叠时的绝缘。通过了奔驰等豪华车企的严格供应商审核和耐久性测试。",
+            date: "2022-04"
+        },
+        {
+            company: "特斯拉 (Tesla)",
+            cellInfo: "4680 圆柱电池",
+            oem: "特斯拉 (自供)",
+            keyInfo: "开创性地在4680电芯上应用UV喷涂替代传统PET塑料膜。目标是提升生产效率、降低成本、提高体积能量密度。设备供应商可能为德国的自动化设备公司；油墨为定制开发，满足高速产线和干法电极工艺要求。",
+            date: "2020-09"
+        },
+        {
+            company: "蔚来 (NIO)",
+            cellInfo: "自研大圆柱电池 (类似4680/4695)",
+            oem: "蔚来 (自供)",
+            keyInfo: "在其自研电池产线上规划了UV喷涂工艺，对标特斯拉。关键信息在于其自建的电池试制线和量产线的设备选型，预计会与国内领先的UV设备商合作。目标是实现高安全性和长寿命。",
+            date: "2023-06"
+        }
+    ];
+
+    let myChart;
+
+    const renderTable = (data) => {
+        const tableBody = document.getElementById('data-table-body');
+        tableBody.innerHTML = '';
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-500">未找到匹配的数据。</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const row = `
+                <tr class="bg-white border-b hover:bg-slate-50">
+                    <td class="px-6 py-4 font-medium text-slate-900">${item.company}</td>
+                    <td class="px-6 py-4 table-cell-truncate">${item.cellInfo}</td>
+                    <td class="px-6 py-4 table-cell-truncate">${item.oem}</td>
+                    <td class="px-6 py-4 table-cell-truncate">${item.keyInfo}</td>
+                    <td class="px-6 py-4">${item.date}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    };
+
+    const updateChart = (data) => {
+        const companyCounts = data.reduce((acc, item) => {
+            acc[item.company] = (acc[item.company] || 0) + 1;
+            return acc;
+        }, {});
+
+        const labels = Object.keys(companyCounts);
+        const values = Object.values(companyCounts);
+        
+        const ctx = document.getElementById('companyChart').getContext('2d');
+        if (myChart) {
+            myChart.destroy();
+        }
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '技术应用数据点数量',
+                    data: values,
+                    backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        ticks: {
+                           autoSkip: false,
+                           maxRotation: 45,
+                           minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `数据点: ${context.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    const filterData = () => {
+        const companyFilter = document.getElementById('company-filter').value;
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+
+        let filteredData = reportData;
+
+        if (companyFilter !== 'all') {
+            filteredData = filteredData.filter(item => item.company === companyFilter);
+        }
+
+        if (searchTerm) {
+            filteredData = filteredData.filter(item => 
+                item.company.toLowerCase().includes(searchTerm) ||
+                item.cellInfo.toLowerCase().includes(searchTerm) ||
+                item.oem.toLowerCase().includes(searchTerm) ||
+                item.keyInfo.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        renderTable(filteredData);
+        updateChart(filteredData);
+    };
+
+    const populateFilters = () => {
+        const companyFilter = document.getElementById('company-filter');
+        const companies = [...new Set(reportData.map(item => item.company))];
+        companies.sort();
+        companies.forEach(company => {
+            const option = document.createElement('option');
+            option.value = company;
+            option.textContent = company;
+            companyFilter.appendChild(option);
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        populateFilters();
+        renderTable(reportData);
+        updateChart(reportData);
+
+        document.getElementById('company-filter').addEventListener('change', filterData);
+        document.getElementById('search-input').addEventListener('input', filterData);
+    });
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主流电池公司液冷测试方案调研</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 采用单页仪表板（Dashboard）布局，顶部为核心标题和简介，随后是交互式筛选器（按公司、按电芯类型），下方是数据可视化区域（图表）和详细数据卡片列表。这种结构允许用户从宏观概览（图表）无缝过渡到微观细节（数据卡片），并通过筛选器进行聚焦探索。相比静态表格，这种设计极大地提升了数据的可访问性和洞察效率，用户可以根据自己的调研目的快速定位和比较信息。 -->
+    <!-- Visualization & Content Choices: 1. 电芯类型分布: 目标是快速了解主流厂商产品形态，选用“环形图”直观展示各类型占比，交互为鼠标悬停提示。2. 散热方案统计: 目标是识别主流冷却技术，选用“条形图”比较不同方案的应用频率。3. 详细数据: 目标是呈现具体方案细节，选用“卡片式布局”替代传统表格，每张卡片信息内聚，视觉更清晰，在移动端适配性更好。所有交互均通过原生JS实现，图表库选用Chart.js，在Canvas上渲染。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-700">主流电池公司液冷测试方案调研</h1>
+            <p class="mt-3 text-lg text-gray-600">本报告聚焦行业领先企业在电芯研发与生产测试环节所采用的液冷散热工装及测试方案。</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-md p-4 mb-8 sticky top-0 z-10">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="w-full md:w-auto flex-1">
+                    <label for="company-filter" class="block text-sm font-medium text-gray-700 mb-1">筛选电池公司:</label>
+                    <select id="company-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                        <option value="all">所有公司</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-auto flex-1">
+                    <label for="cell-type-filter" class="block text-sm font-medium text-gray-700 mb-1">筛选电芯类型:</label>
+                    <select id="cell-type-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                        <option value="all">所有类型</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <section id="visualizations" class="mb-10">
+             <h2 class="text-2xl font-bold text-center text-gray-700 mb-8">数据洞察</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold text-center mb-4">调研电芯类型分布</h3>
+                     <p class="text-center text-sm text-gray-500 mb-4">此图表展示了本次调研中涉及的方形、软包和圆柱电芯的比例，反映了当前市场主流的产品形态。</p>
+                    <div class="chart-container">
+                        <canvas id="cellTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold text-center mb-4">主流散热方案技术统计</h3>
+                    <p class="text-center text-sm text-gray-500 mb-4">通过统计不同散热工装方案的应用频率，可以看出液冷板是目前行业内最主流、最通用的电芯测试散热技术。</p>
+                    <div class="chart-container">
+                        <canvas id="coolingSolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-details">
+            <h2 class="text-2xl font-bold text-center text-gray-700 mb-8">方案详情表</h2>
+             <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">
+                下表列出了本次调研的所有详细方案。您可以使用页面顶部的筛选器来快速定位特定公司或电芯类型的测试工装信息。
+            </p>
+            <div class="bg-white p-4 sm:p-6 rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">电池公司名称</th>
+                            <th scope="col" class="px-6 py-3">电芯类型</th>
+                            <th scope="col" class="px-6 py-3">散热工装</th>
+                            <th scope="col" class="px-6 py-3">测试工装</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+                 <p id="no-data-message" class="text-center text-gray-500 py-8 hidden">未找到符合条件的方案。</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const batteryData = [
+            { id: 1, company: 'CATL (宁德时代)', cellType: '方形', coolingFixture: '定制化高精度液冷板，模拟电芯在电池包内的双面或单面冷却环境', testFixture: '高精度多通道测试系统，集成温度、压力、应变等多物理量监控，支持高倍率充放电' },
+            { id: 2, company: 'BYD (比亚迪)', cellType: '方形 (刀片)', coolingFixture: '针对刀片电池的长条形液冷板，重点保证长方向温度一致性，采用侧面冷却为主', testFixture: '大规模自动化测试工装，结合模拟电池包结构，进行电性能及可靠性验证' },
+            { id: 3, company: 'EVE (亿纬锂能)', cellType: '圆柱 (大圆柱)', coolingFixture: '圆柱形液冷套管或带有圆弧凹槽的液冷板，确保圆柱侧面均匀散热', testFixture: '专注于大圆柱电芯的测试夹具，具备高电流通流能力和精确的温度采集点' },
+            { id: 4, company: 'EVE (亿纬锂能)', cellType: '方形', coolingFixture: '通用型平面液冷板，通过调整夹具压力适应不同厚度电芯，保证热接触良好', testFixture: '灵活的多功能测试平台，兼容不同尺寸方形电芯的性能、寿命及安全测试' },
+            { id: 5, company: 'CALB (中创新航)', cellType: '软包', coolingFixture: '带压力控制的平面液冷板，对电芯表面施加均匀压力，模拟模组预紧力，优化散热效果', testFixture: '软包电芯专用测试夹具，重点保护极耳区域，防止测试过程中过热或损坏' },
+            { id: 6, company: 'Gotion (国轩高科)', cellType: '软包', coolingFixture: '双面平面液冷板，采用高导热率柔性材料作为界面，提升温度均匀性', testFixture: '自动化产线集成的在线测试工位，进行化成、分容等环节的温度控制' },
+            { id: 7, company: 'SVOLT (蜂巢能源)', cellType: '方形 (短刀)', coolingFixture: '与短刀电池尺寸匹配的专用液冷板，优化流道设计以实现高效冷却', testFixture: '高速自动化测试线，支持从电芯上线、测试到下线的全流程管控' },
+            { id: 8, company: 'AESC (远景动力)', cellType: '软包', coolingFixture: '高精度控温液冷板，温控精度可达±0.5℃，用于性能标定和模型开发', testFixture: '研发级高精度测试设备，用于研究不同温度下电芯的电化学特性' },
+            { id: 9, company: 'Tesla (特斯拉)', cellType: '圆柱 (4680)', coolingFixture: '模拟电池包结构的集成式冷却歧管或侧冷板，复现车辆实际运行的散热路径', testFixture: '高度定制化的测试工装，不仅测试电性能，还包含对结构完整性、内压变化的监控' },
+            { id: 10, company: 'Sunwoda (欣旺达)', cellType: '方形', coolingFixture: '模块化液冷板，可通过组合拼接适应不同尺寸的电芯测试需求，具有良好通用性', testFixture: '兼顾动力与消费类电芯的综合测试平台，支持广范围的电流和电压等级' },
+            { id: 11, company: 'BAK (比克)', cellType: '圆柱', coolingFixture: '针对小圆柱（18650/21700）的密集型液冷散热模块，实现高密度测试', testFixture: '高通道数测试系统，适用于圆柱电芯的大批量筛选和一致性评估' },
+            { id: 12, company: 'Zhengli New Energy (正力新能)', cellType: '软包', coolingFixture: '浸没式冷却方案探索，将电芯完全浸入绝缘冷却液中，用于极限性能测试', testFixture: '针对浸没式冷却环境设计的特种测试夹具，注重材料兼容性和密封性' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const companyFilter = document.getElementById('company-filter');
+            const cellTypeFilter = document.getElementById('cell-type-filter');
+            const tableBody = document.getElementById('data-table-body');
+            const noDataMessage = document.getElementById('no-data-message');
+
+            const companies = [...new Set(batteryData.map(item => item.company))];
+            const cellTypes = [...new Set(batteryData.map(item => item.cellType))];
+
+            companies.forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            cellTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                cellTypeFilter.appendChild(option);
+            });
+
+            const renderTopCharts = () => {
+                const mainCellTypesData = batteryData.map(item => {
+                    if (item.cellType.includes('方形')) return '方形';
+                    if (item.cellType.includes('圆柱')) return '圆柱';
+                    if (item.cellType.includes('软包')) return '软包';
+                    return item.cellType;
+                });
+                const cellTypeCounts = mainCellTypesData.reduce((acc, type) => {
+                    acc[type] = (acc[type] || 0) + 1;
+                    return acc;
+                }, {});
+
+                new Chart(document.getElementById('cellTypeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(cellTypeCounts),
+                        datasets: [{
+                            data: Object.values(cellTypeCounts),
+                            backgroundColor: ['#2dd4bf', '#60a5fa', '#f87171'],
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+
+                const coolingSolutions = {
+                    '液冷板': batteryData.filter(item => item.coolingFixture.includes('液冷板')).length,
+                    '液冷套管/模块': batteryData.filter(item => item.coolingFixture.includes('圆柱') || item.coolingFixture.includes('套管') || item.coolingFixture.includes('模块')).length,
+                    '集成式冷却': batteryData.filter(item => item.coolingFixture.includes('集成') || item.coolingFixture.includes('歧管')).length,
+                    '浸没式冷却': batteryData.filter(item => item.coolingFixture.includes('浸没式')).length
+                };
+
+                new Chart(document.getElementById('coolingSolutionChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(coolingSolutions),
+                        datasets: [{
+                            label: '应用数量',
+                            data: Object.values(coolingSolutions),
+                            backgroundColor: '#60a5fa',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+            };
+
+            const renderTable = (data) => {
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    noDataMessage.classList.remove('hidden');
+                    return;
+                }
+                noDataMessage.classList.add('hidden');
+                data.forEach(item => {
+                    const row = `
+                        <tr class="bg-white border-b odd:bg-white even:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">${item.company}</td>
+                            <td class="px-6 py-4">${item.cellType}</td>
+                            <td class="px-6 py-4">${item.coolingFixture}</td>
+                            <td class="px-6 py-4">${item.testFixture}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            };
+            
+            const filterData = () => {
+                const selectedCompany = companyFilter.value;
+                const selectedCellType = cellTypeFilter.value;
+                
+                let filteredData = batteryData;
+
+                if (selectedCompany !== 'all') {
+                    filteredData = filteredData.filter(item => item.company === selectedCompany);
+                }
+
+                if (selectedCellType !== 'all') {
+                    filteredData = filteredData.filter(item => item.cellType === selectedCellType);
+                }
+
+                renderTable(filteredData);
+            };
+
+            companyFilter.addEventListener('change', filterData);
+            cellTypeFilter.addEventListener('change', filterData);
+            
+            renderTopCharts();
+            renderTable(batteryData); 
+        });
+    </script>
+
+</body>
+</html>
+

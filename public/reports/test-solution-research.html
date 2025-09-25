@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主要电池制造商电芯测试方案概览</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is now a focused interactive data table. The primary goal is to allow users to efficiently browse, filter, and compare detailed testing solutions from various companies. By removing the chart, the interface is simplified, directing the user's attention entirely to the data grid. This structure is ideal for users who need to perform specific lookups or side-by-side comparisons without the need for high-level visualization. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Full dataset of testing solutions. Goal: Inform & Compare. Viz/Presentation: Interactive HTML Table. Interaction: Filtering by company and cell type, hover effects. Justification: A table is the most effective way to display structured, multi-attribute data for direct comparison. Filtering is essential for managing the data volume. The removal of other elements makes this the central, and only, feature. Method: Vanilla JS DOM manipulation.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">主流电池制造商电芯测试方案调研</h1>
+            <p class="mt-2 text-slate-600 max-w-3xl mx-auto">一个用于探索和比较全球领先电池公司（包括EVE、CATL、BYD等）采用的各种电芯测试方案的交互式数据浏览器。请使用下方的筛选器来查找和对比具体信息。</p>
+        </header>
+
+        <main>
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                 <h2 class="text-xl font-bold text-slate-800 mb-4">详细数据浏览器</h2>
+                <p class="text-slate-600 mb-4">
+                    下表提供了各公司针对不同电芯类型的详细测试方案。您可以使用“公司名称”和“电芯类型”筛选器来精确查找您感兴趣的信息。表格中的数据反映了行业内普遍采用的测试标准和实践。
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="company-filter" class="block text-sm font-medium text-slate-700">按公司名称筛选:</label>
+                        <select id="company-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm">
+                            <option value="all">所有公司</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="cell-type-filter" class="block text-sm font-medium text-slate-700">按电芯类型筛选:</label>
+                        <select id="cell-type-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm">
+                            <option value="all">所有类型</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">公司名称</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">电芯类型</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">HPPC测试方案</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">倍率测试方案</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SOC-OCV测试方案</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">快充测试方案</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">循环测试方案</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table" class="bg-white divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 text-slate-500 text-sm">
+            <p>&copy; 2025 电池测试方案调研. 数据仅供参考。</p>
+        </footer>
+    </div>
+
+    <script>
+        const testData = [
+            { company: "CATL (宁德时代)", cell_type: "方形 (磷酸铁锂)", hppc: "基于国标GB/T 31486，多温度点测试", rate: "0.5C, 1C, 2C充放电，记录容量保持率", soc_ocv: "低电流滴定法 + 长时间静置", fast_charge: "4C-5C脉冲充电，阶梯式电流输入", cycle: "1C/1C循环，常温/高温环境" },
+            { company: "CATL (宁德时代)", cell_type: "方形 (三元)", hppc: "FreedomCAR手册，多SOC区间", rate: "1C, 2C, 3C多倍率放电性能测试", soc_ocv: "增量容量分析(ICA)辅助标定", fast_charge: "恒流-恒压(CC-CV)优化策略，监控析锂", cycle: "800-1500次，关注容量衰减和内阻增长" },
+            { company: "BYD (比亚迪)", cell_type: "刀片 (磷酸铁锂)", hppc: "混合脉冲功率特性测试，模拟工况", rate: "多温度点(-20°C至55°C)倍率性能", soc_ocv: "可变电流弛豫法", fast_charge: "脉冲充电+负脉冲去极化策略", cycle: "3000+次循环，强调长寿命和安全性" },
+            { company: "EVE (亿纬锂能)", cell_type: "圆柱 (三元)", hppc: "USABC标准，覆盖全SOC范围", rate: "0.5C至5C放电测试，评估温升", soc_ocv: "电化学阻抗谱(EIS)结合测试", fast_charge: "多阶段恒流充电(MCC)", cycle: "高温(45°C)循环，评估产气和衰减" },
+            { company: "EVE (亿纬锂能)", cell_type: "软包 (三元)", hppc: "DST/FUDS工况模拟测试", rate: "高倍率(5C+)放电性能和热特性", soc_ocv: "GITT法精确测量", fast_charge: "智能充电算法，基于温度和电压反馈", cycle: "快充循环，评估对寿命影响" },
+            { company: "CALB (中创新航)", cell_type: "软包 (三元)", hppc: "基于IEC 62660标准", rate: "宽温区(-30°C至60°C)性能评估", soc_ocv: "长时间静置(>24h)法", fast_charge: "非线性路径优化充电策略", cycle: "高低温循环结合，模拟真实工况" },
+            { company: "BAK (比克)", cell_type: "圆柱 (高镍三元)", hppc: "HPPC结合DCIR测试", rate: "超高倍率(>8C)脉冲放电能力", soc_ocv: "低C率(C/20)充放电曲线法", fast_charge: "负极电位监控的快充策略", cycle: "关注高SOC窗口下的循环稳定性" },
+            { company: "蜂巢能源", cell_type: "方形 (无钴)", hppc: "动态应力测试(DST)法", rate: "评估不同DOD下的倍率性能", soc_ocv: "库伦滴定法", fast_charge: "梯度降流充电法", cycle: "长日历寿命测试结合循环测试" },
+            { company: "AESC (远景动力)", cell_type: "软包 (三元)", hppc: "结合内阻和开路电压的综合评估", rate: "连续充放电和脉冲充放电结合", soc_ocv: "标准C/25充放电法", fast_charge: "恒温充电策略，严格控制温升", cycle: "安全滥用测试后的循环性能评估" },
+            { company: "TESLA (特斯拉)", cell_type: "4680圆柱 (高镍)", hppc: "高频阻抗和DCIR结合评估动态响应", rate: "极限倍率放电和热失控风险评估", soc_ocv: "模型算法标定(如等效电路模型)", fast_charge: "预测性控制充电，基于模型预测", cycle: "超长里程模拟循环(>50万公里)" },
+            { company: "欣旺达", cell_type: "软包 (三元/铁锂)", hppc: "国标与企标结合，更严苛条件", rate: "客户定制化倍率性能测试", soc_ocv: "长时间静置和数据拟合", fast_charge: "BMS协同快充策略", cycle: "存储性能测试和循环测试并行" },
+            { company: "正力新能", cell_type: "方形 (半固态)", hppc: "针对固态电解质特性的脉冲测试", rate: "界面稳定性下的倍率性能评估", soc_ocv: "特殊弛豫行为标定", fast_charge: "抑制枝晶生长的快充协议", cycle: "压力(stack pressure)对循环性能影响评估" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('data-table');
+            const companyFilter = document.getElementById('company-filter');
+            const cellTypeFilter = document.getElementById('cell-type-filter');
+            
+            const companies = [...new Set(testData.map(item => item.company))];
+            const cellTypes = [...new Set(testData.map(item => item.cell_type))];
+
+            companies.forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            cellTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                cellTypeFilter.appendChild(option);
+            });
+
+            const renderTable = (data) => {
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    const cell = document.createElement('td');
+                    cell.colSpan = 7;
+                    cell.textContent = '没有找到匹配的数据。';
+                    cell.className = 'px-6 py-4 text-center text-slate-500';
+                    row.appendChild(cell);
+                    tableBody.appendChild(row);
+                    return;
+                }
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${item.company}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${item.cell_type}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-slate-500">${item.hppc}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-slate-500">${item.rate}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-slate-500">${item.soc_ocv}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-slate-500">${item.fast_charge}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-slate-500">${item.cycle}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            };
+            
+            const filterAndRender = () => {
+                const company = companyFilter.value;
+                const cellType = cellTypeFilter.value;
+                
+                const filteredData = testData.filter(item => 
+                    (company === 'all' || item.company === company) &&
+                    (cellType === 'all' || item.cell_type === cellType)
+                );
+                
+                renderTable(filteredData);
+            };
+
+            companyFilter.addEventListener('change', filterAndRender);
+            cellTypeFilter.addEventListener('change', filterAndRender);
+
+            filterAndRender();
+        });
+    </script>
+</body>
+</html>
+

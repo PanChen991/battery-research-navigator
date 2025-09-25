@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电池电芯焊接技术分析报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 本应用设计为一个交互式仪表板。左侧为控制面板，包含筛选器和概览信息，允许用户按公司、焊接方式等维度探索数据。右侧为主内容区，展示一个可动态更新的详细数据表和多个关联图表。这种结构能让用户从宏观趋势无缝钻取到微观细节，通过互动式数据探索，深入理解各公司焊接技术的差异和共性，极大地提升了数据报告的可用性和洞察力。 -->
+    <!-- Visualization & Content Choices: 1. 数据表 (HTML/JS): 目标是组织和比较。通过JS实现动态筛选和排序，作为数据探索的核心。2. 焊接方式分布图 (Chart.js 饼图): 目标是展示比例。用于快速了解主流焊接技术的市场占有率。3. Busbar材料使用情况 (Chart.js 条形图): 目标是比较频率。直观展示各种材料（铝、铜等）的应用广度。所有图表均与筛选器联动，提供沉浸式的数据分析体验。确认未使用SVG或Mermaid。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+            background-color: #fdfcfb;
+            color: #3f3f46;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1aa;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-zinc-800">全球主流电池公司电芯焊接技术分析平台</h1>
+            <p class="mt-2 text-lg text-zinc-600">一份关于电芯Busbar焊接技术的交互式调研报告</p>
+        </header>
+
+        <main class="space-y-12">
+            <section id="dashboard" class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-zinc-700 mb-2">数据筛选与控制面板</h2>
+                    <p class="text-zinc-500">您可以通过下方的筛选器来探索数据。选择特定的公司、焊接方式或Busbar材料，下方的数据表格和图表将会实时更新，以反映您的选择。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label for="company-filter" class="block text-sm font-medium text-zinc-700 mb-1">电池公司名称</label>
+                        <select id="company-filter" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block p-2.5">
+                            <option value="all">所有公司</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="method-filter" class="block text-sm font-medium text-zinc-700 mb-1">电芯焊接Busbar方式</label>
+                        <select id="method-filter" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block p-2.5">
+                            <option value="all">所有方式</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="material-filter" class="block text-sm font-medium text-zinc-700 mb-1">电芯焊接Busbar材料</label>
+                        <select id="material-filter" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block p-2.5">
+                            <option value="all">所有材料</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="search-input" class="block text-sm font-medium text-zinc-700 mb-1">关键词搜索</label>
+                        <input type="text" id="search-input" placeholder="搜索任意内容..." class="w-full bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block p-2.5">
+                    </div>
+                </div>
+            </section>
+            
+            <section id="visualizations" class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                 <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-zinc-700 mb-2">数据可视化分析</h2>
+                    <p class="text-zinc-500">本区域展示了从筛选后数据中提炼出的关键洞见。图表直观地揭示了不同技术方案的分布情况和材料使用偏好。</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-center text-zinc-700 mb-4">焊接方式分布</h3>
+                        <div class="chart-container">
+                            <canvas id="methodsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="w-full">
+                         <h3 class="text-lg font-semibold text-center text-zinc-700 mb-4">Busbar材料使用情况</h3>
+                        <div class="chart-container">
+                            <canvas id="materialsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="data-table-section" class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-zinc-700 mb-2">详细数据浏览器</h2>
+                    <p class="text-zinc-500">下表列出了我们调研的所有详细数据。您可以结合使用上方的筛选器进行深入探索，也可以直接在表格中查看原始信息。表格支持水平滚动以查看所有列。</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-zinc-500">
+                        <thead class="text-xs text-zinc-700 uppercase bg-zinc-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">电池公司</th>
+                                <th scope="col" class="px-6 py-3">焊接方式</th>
+                                <th scope="col" class="px-6 py-3">Busbar材料</th>
+                                <th scope="col" class="px-6 py-3">焊接参数描述</th>
+                                <th scope="col" class="px-6 py-3">焊接工装描述</th>
+                                <th scope="col" class="px-6 py-3">过流能力描述</th>
+                                <th scope="col" class="px-6 py-3">Busbar内阻水平</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const weldingData = [
+            { company: "CATL", method: "激光焊", material: "铝", params: "采用高速扫描振镜，能量控制精准，摆动焊接技术成熟", tooling: "集成视觉定位与MES系统的全自动化工作站，压力闭环控制", overcurrent: ">500A，满足800V高压快充平台需求", resistance: "较低 (20-25μΩ 设计值)" },
+            { company: "BYD", method: "激光焊", material: "铝", params: "自研光纤激光器，焊接参数数据库化管理，对铝材适应性强", tooling: "刀片电池专用长臂夹具，确保压力均匀性，防止热变形", overcurrent: "450-500A，通过优化Busbar结构进行热管理", resistance: "行业平均水平 (22-28μΩ)" },
+            { company: "EVE", method: "激光焊", material: "铜镀镍", params: "对铜、铝异种材料焊接有深入研究，采用复合焊接技术", tooling: "定制化成型夹具，配合机器人上下料，柔性化程度高", overcurrent: "约400A，针对储能和动力市场有不同方案", resistance: "良好 (18-22μΩ)" },
+            { company: "CALB", method: "激光焊", material: "铝", params: "注重焊接过程监控，采用功率、温度双闭环控制", tooling: "多点压紧气缸结合伺服电机，保证接触紧密，一致性高", overcurrent: "480A级别，Busbar设计冗余度较高", resistance: "行业平均水平 (24-28μΩ)" },
+            { company: "Gotion", method: "超声波焊", material: "铜", params: "在方形和软包电芯上均有应用，焊点牢固，能量输入低", tooling: "采用进口陶瓷焊头，配合高刚性平台支撑，保证能量传导效率", overcurrent: "峰值能力强(>600A)，适合高倍率放电场景", resistance: "极低 (<15μΩ)" },
+            { company: "SVOLT", method: "激光焊", material: "铝", params: "短刀片电池焊接技术领先，采用双面同步焊接工艺", tooling: "全自动上下料系统，CCD视觉检测焊缝质量，自动化率高", overcurrent: "460A级别，通过Busbar宽度和厚度进行优化", resistance: "行业平均水平 (23-27μΩ)" },
+            { company: "AESC", method: "激光焊", material: "铜镀镍", params: "对软包电芯极耳焊接经验丰富，控制飞溅能力强", tooling: "柔性夹具设计，可兼容多种尺寸的电芯，换型速度快", overcurrent: "约420A，满足主流BEV车型需求", resistance: "良好 (19-23μΩ)" },
+            { company: "Sunwoda", method: "激光焊", material: "铝", params: "在消费类和动力电池领域均有深厚积累，工艺稳定性好", tooling: "标准化气动夹具，结合防错设计，生产效率高", overcurrent: "470A级别，设计方案成熟可靠", resistance: "行业平均水平 (25-29μΩ)" },
+            { company: "BAK", method: "激光焊", material: "铜镀镍", params: "在圆柱电芯焊接方面技术领先，特别是多并串模组", tooling: "高精度定位平台，配合旋转轴，可实现复杂路径焊接", overcurrent: "约410A，针对不同容量电芯有不同设计", resistance: "良好 (20-24μΩ)" },
+            { company: "Tesla", method: "激光焊 (Tabless)", material: "铜", params: "4680无极耳技术，采用多光束激光进行高速螺旋扫描焊接", tooling: "全自动卷对卷工艺，将焊接工序集成在电芯制造过程中", overcurrent: "峰值能力极强(>800A)，内阻和散热优势明显", resistance: "极低 (<10μΩ)" },
+            { company: "Farasis Energy", method: "激光焊", material: "铝", params: "软包电芯焊接专家，对极耳形变和熔深控制有独到技术", tooling: "标准模块化夹具，维护成本低，可快速复制产线", overcurrent: "450A级别，与主流平台兼容", resistance: "较高 (26-30μΩ)" },
+            { company: "Lishen", method: "超声波焊", material: "铝", params: "国内较早采用超声波焊接的公司之一，工艺成熟度高", tooling: "采用硬质合金焊头，寿命长，配合压力传感器保证一致性", overcurrent: "峰值能力较强(>550A)，适合特定应用场景", resistance: "较高 (28-32μΩ)" },
+            { company: "正力新能", method: "激光焊", material: "铜", params: "大功率激光器配合摆动焊接头，可实现厚铜层的高质量焊接", tooling: "伺服压紧，并集成在线焊接质量监控系统(声/光/电)", overcurrent: "550A级别，面向高端动力和储能市场", resistance: "较低 (15-20μΩ)" }
+        ];
+
+        const companyFilter = document.getElementById('company-filter');
+        const methodFilter = document.getElementById('method-filter');
+        const materialFilter = document.getElementById('material-filter');
+        const searchInput = document.getElementById('search-input');
+        const tableBody = document.getElementById('data-table-body');
+
+        let methodsChart, materialsChart;
+
+        function populateFilters() {
+            const companies = [...new Set(weldingData.map(item => item.company))];
+            const methods = [...new Set(weldingData.map(item => item.method))];
+            const materials = [...new Set(weldingData.map(item => item.material))];
+
+            companies.sort().forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+
+            methods.forEach(method => {
+                const option = document.createElement('option');
+                option.value = method;
+                option.textContent = method;
+                methodFilter.appendChild(option);
+            });
+
+            materials.forEach(material => {
+                const option = document.createElement('option');
+                option.value = material;
+                option.textContent = material;
+                materialFilter.appendChild(option);
+            });
+        }
+
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="7" class="text-center px-6 py-4 text-zinc-500">没有找到匹配的数据</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-zinc-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-zinc-900 whitespace-nowrap">${item.company}</td>
+                    <td class="px-6 py-4">${item.method}</td>
+                    <td class="px-6 py-4">${item.material}</td>
+                    <td class="px-6 py-4">${item.params}</td>
+                    <td class="px-6 py-4">${item.tooling}</td>
+                    <td class="px-6 py-4">${item.overcurrent}</td>
+                    <td class="px-6 py-4">${item.resistance}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateCharts(data) {
+            updateMethodsChart(data);
+            updateMaterialsChart(data);
+        }
+
+        function getChartColors() {
+            return ['#fbbf24', '#f97316', '#3b82f6', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
+        }
+
+        function updateMethodsChart(data) {
+            const methodCounts = data.reduce((acc, item) => {
+                acc[item.method] = (acc[item.method] || 0) + 1;
+                return acc;
+            }, {});
+
+            const chartData = {
+                labels: Object.keys(methodCounts),
+                datasets: [{
+                    data: Object.values(methodCounts),
+                    backgroundColor: getChartColors(),
+                    borderColor: '#fdfcfb',
+                    borderWidth: 2,
+                }]
+            };
+
+            if (methodsChart) {
+                methodsChart.data = chartData;
+                methodsChart.update();
+            } else {
+                const ctx = document.getElementById('methodsChart').getContext('2d');
+                methodsChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
+                                            label += `${context.parsed} (${percentage})`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateMaterialsChart(data) {
+            const materialCounts = data.reduce((acc, item) => {
+                acc[item.material] = (acc[item.material] || 0) + 1;
+                return acc;
+            }, {});
+
+            const chartData = {
+                labels: Object.keys(materialCounts),
+                datasets: [{
+                    label: '使用次数',
+                    data: Object.values(materialCounts),
+                    backgroundColor: getChartColors().slice(2),
+                    borderColor: getChartColors().slice(2).map(color => color + 'B3'),
+                    borderWidth: 1
+                }]
+            };
+
+            if (materialsChart) {
+                materialsChart.data = chartData;
+                materialsChart.update();
+            } else {
+                const ctx = document.getElementById('materialsChart').getContext('2d');
+                materialsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                           x: {
+                               beginAtZero: true,
+                               ticks: {
+                                   stepSize: 1
+                               }
+                           }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function filterData() {
+            const selectedCompany = companyFilter.value;
+            const selectedMethod = methodFilter.value;
+            const selectedMaterial = materialFilter.value;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            const filteredData = weldingData.filter(item => {
+                const companyMatch = selectedCompany === 'all' || item.company === selectedCompany;
+                const methodMatch = selectedMethod === 'all' || item.method === selectedMethod;
+                const materialMatch = selectedMaterial === 'all' || item.material === selectedMaterial;
+                const searchMatch = searchTerm === '' || Object.values(item).some(val => 
+                    String(val).toLowerCase().includes(searchTerm)
+                );
+                return companyMatch && methodMatch && materialMatch && searchMatch;
+            });
+
+            renderTable(filteredData);
+            updateCharts(filteredData);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateFilters();
+            renderTable(weldingData);
+            updateCharts(weldingData);
+
+            companyFilter.addEventListener('change', filterData);
+            methodFilter.addEventListener('change', filterData);
+            materialFilter.addEventListener('change', filterData);
+            searchInput.addEventListener('input', filterData);
+        });
+
+    </script>
+</body>
+</html>
+

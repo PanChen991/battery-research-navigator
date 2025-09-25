@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球干法电极技术研究报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Subtle Tech Blue -->
+    <!-- Application Structure Plan: A single-page dashboard. The top provides a high-level technology comparison chart. The main content area is a filterable, interactive table displaying detailed information for each company. The table format is chosen for easy cross-referencing and comparison of specific data points (like process routes or suppliers) across multiple companies, fulfilling the user's direct request. -->
+    <!-- Visualization & Content Choices: 
+        - Overview Chart: Goal is to inform. Method is a bar chart comparing key advantages. Interaction is hovering for details. Justification: Provides a quick, high-level summary of the technology's value proposition. Library: Chart.js.
+        - Company Data Table: Goal is to organize and compare. Method is an HTML table dynamically populated with JavaScript. Interaction: Filtering by company type. Justification: The tabular structure is ideal for presenting dense, structured data and allowing users to compare entries row by row. This is more direct for analysis than the previous card layout.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f7f4;
+            color: #3a3a3a;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        .btn-filter {
+            background-color: #fff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            transition: all 0.3s;
+        }
+        .btn-filter.active, .btn-filter:hover {
+            background-color: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        th, td {
+            vertical-align: top;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">全球干法电极技术格局</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">一份对主要参与者、工艺路线和供应链的交互式分析报告。</p>
+        </header>
+
+        <section id="overview" class="mb-12">
+            <h2 class="section-title">技术优势概览</h2>
+            <p class="text-gray-600 mb-6 text-center max-w-3xl mx-auto">
+                干法电极技术通过消除有毒且昂贵的NMP溶剂，简化了生产流程，有望显著提升电池的能量密度、降低成本并减少环境影响。此图表展示了相较于传统湿法工艺，干法工艺在关键性能指标上的潜在优势。
+            </p>
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                <div class="chart-container">
+                    <canvas id="advantagesChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="companies">
+            <h2 class="section-title">核心参与者分析</h2>
+            <p class="text-gray-600 mb-6 text-center max-w-3xl mx-auto">
+                深入了解全球范围内在干法电极技术领域进行布局的公司。您可以通过点击下方的按钮，筛选不同类型的公司，以关注您最感兴趣的领域，无论是整车厂、电池供应商还是设备制造商。
+            </p>
+            <div class="flex justify-center flex-wrap gap-2 mb-8" id="filter-container">
+                <button class="btn-filter active px-4 py-2 rounded-full text-sm font-semibold" data-filter="all">所有公司</button>
+                <button class="btn-filter px-4 py-2 rounded-full text-sm font-semibold" data-filter="整车厂">整车厂</button>
+                <button class="btn-filter px-4 py-2 rounded-full text-sm font-semibold" data-filter="电池供应商">电池供应商</button>
+                <button class="btn-filter px-4 py-2 rounded-full text-sm font-semibold" data-filter="设备制造商">设备制造商</button>
+                <button class="btn-filter px-4 py-2 rounded-full text-sm font-semibold" data-filter="材料商">材料商</button>
+            </div>
+            <div class="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公司名</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">正负极配方</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工艺路线</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">设备制造商</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">粘结剂厂家</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">相关测试</th>
+                        </tr>
+                    </thead>
+                    <tbody id="company-table-body" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const companyData = [
+            { name: '特斯拉 (Tesla)', category: '整车厂', recipe: '正极: 高镍NCA/NMC + 导电剂 + PTFE粘结剂<br>负极: 石墨/硅碳 + 导电剂 + PTFE粘结剂', process: '收购Maxwell技术。1) 干粉混合 2) 纤维化 3) 压延成膜 4) 覆合至集流体', equipment: '自研或与合作伙伴(ATW Automation)定制', binder_supplier: '高度保密，可能为定制开发(科慕, 索尔维, 3M, 大金等为潜在供应商)', testing: '电化学性能(循环, 倍率), 机械性能(剥离强度), 安全性(针刺等)' },
+            { name: '清陶能源 (Cnano Tech)', category: '电池供应商', recipe: '专注于固态/半固态电池。正极: 高镍三元/磷酸盐 + 固态电解质<br>负极: 硅基/金属锂 + 固态电解质', process: '具体路线未完全公开，可能结合干法与热压/冷压工艺', equipment: '与先导智能等合作，部分自研', binder_supplier: '未公开，可能为特殊聚合物', testing: '重点关注界面稳定性、离子电导率、机械应力性能' },
+            { name: '先导智能 (Lead)', category: '设备制造商', recipe: 'N/A', process: '提供完整干法电极生产线解决方案，涵盖混合、纤维化、成膜、覆合全流程', equipment: '干法粉末混合机、高精度压延成膜机、高速覆合机', binder_supplier: 'N/A', testing: '设备稳定性、产品良率、厚度均匀性(≤1μm)、面密度精度(≤1%)' },
+            { name: '曼恩斯特 (Mannerst)', category: '设备制造商', recipe: 'N/A', process: '从湿法涂布技术切入，布局干法工艺中的粉末精确给料和高精度覆合环节', equipment: '研发用于干法工艺的粉末分配系统和精密层压设备', binder_supplier: 'N/A', testing: '设备精度、材料兼容性、小批量试产验证' },
+            { name: '宁德时代 (CATL)', category: '电池供应商', recipe: '凝聚态电池、麒麟电池等，覆盖高镍、LFP、高克容量石墨等体系', process: '拥有大量干法电极相关专利，路线多样，包括静电喷涂、PTFE纤维化等', equipment: '与先导等合作，且有强大自研能力', binder_supplier: '未公开，拥有稳定战略供应商网络', testing: '全面的电芯、模组、系统级测试，标准严苛' },
+            { name: '大众汽车 (VW)', category: '整车厂', recipe: '通过PowerCo研发，覆盖高镍和LFP体系', process: '计划在"SalzGiga"工厂应用干法涂布工艺(预计2025年后)，旨在消除涂布和干燥环节', equipment: '未公开，可能与欧洲或亚洲设备商合作', binder_supplier: '未公开', testing: '从材料到电芯A/B/C样品再到量产的全流程验证' },
+            { name: '24M Technologies', category: '电池供应商', recipe: '兼容LFP、NMC等主流体系', process: '采用“半固态”技术，将活性材料与少量电解液混合成“粘土状”浆料后挤出成型，省去干燥过程', equipment: '通过技术授权与富士胶片、京瓷等合作', binder_supplier: '独特的半固态体系，可能使用专门开发的粘结剂', testing: '主打厚电极带来的高能量密度和简易工艺的成本优势' },
+            { name: '杜邦 (DuPont)', category: '材料商', recipe: 'N/A', process: '专注于研发用于干法工艺的特种粘结剂，优化纤维化效果和粘结强度', equipment: 'N/A', binder_supplier: '自身即为核心粘结剂供应商', testing: '材料性能测试(热稳定性、电化学窗口、机械强度等)' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const companyTableBody = document.getElementById('company-table-body');
+            const filterContainer = document.getElementById('filter-container');
+
+            function renderTable(filter = 'all') {
+                companyTableBody.innerHTML = '';
+                const filteredData = (filter === 'all') ? companyData : companyData.filter(c => c.category === filter);
+
+                if (filteredData.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="7" class="text-center py-8 text-gray-500">没有找到符合条件的公司。</td>`;
+                    companyTableBody.appendChild(row);
+                    return;
+                }
+
+                filteredData.forEach(company => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition-colors';
+                    
+                    let tagColorClass = '';
+                    switch(company.category) {
+                        case '整车厂': tagColorClass = 'bg-blue-100 text-blue-800'; break;
+                        case '电池供应商': tagColorClass = 'bg-green-100 text-green-800'; break;
+                        case '设备制造商': tagColorClass = 'bg-purple-100 text-purple-800'; break;
+                        case '材料商': tagColorClass = 'bg-yellow-100 text-yellow-800'; break;
+                        default: tagColorClass = 'bg-gray-100 text-gray-800';
+                    }
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4"><div class="text-sm font-medium text-gray-900 min-w-[120px]">${company.name}</div></td>
+                        <td class="px-6 py-4"><span class="tag ${tagColorClass}">${company.category}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-600"><div class="min-w-[250px]">${company.recipe}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-600"><div class="min-w-[300px]">${company.process}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-600"><div class="min-w-[200px]">${company.equipment}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-600"><div class="min-w-[200px]">${company.binder_supplier}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-600"><div class="min-w-[250px]">${company.testing}</div></td>
+                    `;
+                    companyTableBody.appendChild(row);
+                });
+            }
+            
+            filterContainer.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const filterValue = e.target.getAttribute('data-filter');
+                    renderTable(filterValue);
+                }
+            });
+
+            renderTable();
+
+            const ctx = document.getElementById('advantagesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['能量密度提升', '制造成本降低', '环境友好度', '生产效率提升', '资本支出减少'],
+                    datasets: [{
+                        label: '干法电极相对湿法的潜在优势 (%)',
+                        data: [15, 30, 90, 40, 25],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(16, 185, 129, 0.6)',
+                            'rgba(234, 179, 8, 0.6)',
+                            'rgba(139, 92, 246, 0.6)',
+                            'rgba(236, 72, 153, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(234, 179, 8, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(236, 72, 153, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: '优势提升百分比 (%)' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.x !== null) { label += context.parsed.x + '% (估算值)'; }
+                                    return label;
+                                }
+                            }
+                        },
+                        title: { display: true, text: '干法电极工艺优势评估', font: { size: 18 } }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

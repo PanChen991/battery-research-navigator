@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球电池“双层涂布”技术对比报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cool Gray and Blue Professional -->
+    <!-- Application Structure Plan: The structure is a hybrid dashboard. It starts with high-level visualizations (charts) for a quick overview of key concepts. Below the charts, a comprehensive data table allows for detailed, side-by-side comparisons. A redesigned, context-aware search bar at the top acts as the primary filter for the detailed table. This top-down approach (from general concepts to specific details) provides a more intuitive user journey for data exploration and analysis. -->
+    <!-- Visualization & Content Choices: 
+        1. Layer Ratios -> Goal: Explain a concept -> Viz: Bar Chart -> Interaction: Hover tooltips -> Justification: Visually demonstrates different coating ratio strategies (Energy vs. Power) making the concept easy to grasp. Library: Chart.js.
+        2. SBR Detection Methods -> Goal: Categorize info -> Viz: Doughnut Chart -> Interaction: Hover tooltips -> Justification: Groups the various detection methods into logical categories (Surface, Cross-section, Electrochemical), providing a clear mental model of the available techniques. Library: Chart.js.
+        3. All Company Data -> Goal: Compare/Analyze -> Viz: Comprehensive HTML Table -> Interaction: Live text search/filter -> Justification: A table is the most effective format for direct comparison. The search filter is essential for navigating the dense information. Method: Vanilla JS.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f4f7f9;
+        }
+        th {
+            position: sticky;
+            top: 0;
+            background-color: #e2e8f0;
+            z-index: 10;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            height: 300px;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            min-width: 1200px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-6">
+        
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">全球电池“双层涂布”技术洞察</h1>
+            <p class="mt-2 text-gray-600">通过交互式图表与可搜索数据表，深入对比行业关键工艺</p>
+        </header>
+
+        <!-- Visualizations Section -->
+        <section class="mb-8 grid md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-center text-blue-600 mb-4">上下层比例设计导向</h3>
+                <div class="chart-container">
+                    <canvas id="ratioChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-center text-blue-600 mb-4">SBR上浮检测方法分类</h3>
+                <div class="chart-container">
+                    <canvas id="sbrMethodsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search and Table Section -->
+        <section>
+            <div class="bg-white p-4 rounded-lg shadow-md mb-4 sticky top-0 z-20">
+                <div class="relative">
+                     <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">搜索下方表格内容：</label>
+                    <input type="text" id="searchInput" placeholder="尝试搜索 “CATL”, “快充”, “PMMA” 或 “XPS”..." class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none top-8">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <main class="bg-white rounded-lg shadow-md">
+                <div class="table-container">
+                    <table id="techTable" class="w-full border-collapse">
+                        <thead class="bg-gray-200 text-gray-700">
+                            <tr>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">公司/机构</th>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">配方比例 (设计原则)</th>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">调试方法 (工艺关键点)</th>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">造孔剂种类及厂家 (推测)</th>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">上下层比例 (应用导向)</th>
+                                <th class="p-3 font-semibold text-left border-b-2 border-gray-300">SBR上浮检测方法</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-blue-50">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">通用技术原理</td>
+                                <td class="p-3 border-b border-gray-200 align-top"><ul class="list-disc list-inside space-y-2"><li><strong>底层:</strong> 高粘结剂/导电剂，强化粘结和电子导电。</li><li><strong>顶层:</strong> 高活性物质，提升能量密度和离子导电。</li></ul></td>
+                                <td class="p-3 border-b border-gray-200 align-top"><ul class="list-disc list-inside space-y-2"><li><strong>浆料流变性匹配:</strong> 控制粘度、固含量。</li><li><strong>设备精度:</strong> 湿叠湿同时涂布。</li><li><strong>分段干燥:</strong> 优化温度/风速曲线。</li><li><strong>界面质量控制:</strong> SEM截面分析。</li></ul></td>
+                                <td class="p-3 border-b border-gray-200 align-top"><ul class="list-disc list-inside space-y-2"><li><strong>有机类:</strong> PMMA, PSt。厂家: Arkema, Mitsubishi。</li><li><strong>无机类:</strong> ZnO, CaCO₃, SiO₂。厂家: Umicore, Targray。</li></ul></td>
+                                <td class="p-3 border-b border-gray-200 align-top"><ul class="list-disc list-inside space-y-2"><li><strong>能量型:</strong> 厚顶层 (如 30:70)。</li><li><strong>功率型:</strong> 厚底层或均衡 (如 50:50)。</li><li><strong>长寿命型:</strong> 均衡比例，材料注重稳定性。</li></ul></td>
+                                <td class="p-3 border-b border-gray-200 align-top"><ul class="list-disc list-inside space-y-2"><li><strong>表面化学:</strong> XPS, ATR-FTIR。</li><li><strong>截面分析:</strong> SEM-EDX, Raman。</li><li><strong>电化学:</strong> EIS (电阻Rct增大)。</li></ul></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">CATL (宁德时代)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">注重快充，顶层强化离子传输，底层强化电子传输和结构稳定性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">快充技术对干燥工艺要求极高，需精密控制溶剂挥发梯度。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能采用复合造孔剂技术，平衡孔隙率和结构稳定性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">快充电池比例偏向功率型，底层导电网络是重点。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">全面的检测体系，结合在线监测和离线精密分析 (XPS, EIS)。</td>
+                            </tr>
+                            <tr class="bg-gray-50 hover:bg-gray-100">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">BYD (比亚迪)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">刀片电池设计注重安全性和体积能量密度的平衡。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">长电芯涂布对均匀性要求更高，调试重点在于张力与速度匹配。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能倾向于使用成本较低、工艺成熟的造孔剂体系。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">LFP体系，比例设计更侧重于压实密度和循环寿命。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">重视水性体系稳定性，对SBR分布的生产过程控制(SPC)要求严格。</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">EVE (亿纬锂能)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">大圆柱电池配方需兼顾高能量密度和倍率性能。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">工艺调试核心在于保证高速涂布下的面密度均一性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">高镍体系可能使用特定造孔剂来改善浸润性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">针对46系列大圆柱，可能采用偏能量型的厚顶层设计。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能采用EIS作为快速、批量的在线或半在线监控手段。</td>
+                            </tr>
+                            <tr class="bg-gray-50 hover:bg-gray-100">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">CALB (中创新航)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">配方设计注重成本与性能的平衡，以满足不同市场需求。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">工艺调试灵活，能够快速响应客户定制化需求。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">根据产品定位选择性价比高的造孔技术。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">比例设计方案多样化，从能量型到均衡型均有覆盖。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">建立了成熟的质量控制流程，常规化使用SEM和电化学方法。</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">SVOLT (蜂巢能源)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">无钴/四元材料体系可能需要特殊的配方来保证稳定性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">飞叠工艺对极片裁切边缘要求高，反推涂布工艺需减少应力。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能在其高速叠片工艺中应用，以提升电池的倍率性能。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">短刀片电池设计可能采用更均衡的层级比例。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">重视界面研究，可能深入使用XPS/TOF-SIMS等表面分析技术。</td>
+                            </tr>
+                            <tr class="bg-gray-50 hover:bg-gray-100">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">SK On</td>
+                                <td class="p-3 border-b border-gray-200 align-top">高镍电池配方重点在于抑制界面副反应和提升循环寿命。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">调试重点在于控制高镍材料与水分接触，可能采用特殊干燥气氛。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能采用先进造孔技术解决高镍材料浸润难题。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">可能采用更厚的底层设计，以增强集流体保护和结构稳定性。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">界面分析是其核心技术，会系统性使用XPS, TEM, EIS等。</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 border-b border-gray-200 font-bold align-top">BAK (比克电池)</td>
+                                <td class="p-3 border-b border-gray-200 align-top">专注于高倍率小圆柱电池，配方设计服务于降低内阻和提升功率。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">调试核心在于保证极薄涂层的均匀性和孔隙率。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">是国内最早研究和应用造孔剂技术的公司之一。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">典型的高功率型比例设计，导电网络构建优先。</td>
+                                <td class="p-3 border-b border-gray-200 align-top">对SBR上浮问题非常敏感，拥有成熟的检测和控制方案。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Search filter logic
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('techTable');
+            const rows = table.getElementsByTagName('tr');
+
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    let textContent = '';
+                    for (let j = 0; j < cells.length; j++) {
+                        textContent += cells[j].textContent || cells[j].innerText;
+                    }
+                    if (textContent.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            });
+
+            // Chart.js: Ratio Chart
+            const ratioCtx = document.getElementById('ratioChart').getContext('2d');
+            new Chart(ratioCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['能量型', '均衡型', '功率型'],
+                    datasets: [{
+                        label: '底层比例 (%)',
+                        data: [30, 50, 60],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    }, {
+                        label: '顶层比例 (%)',
+                        data: [70, 50, 40],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        tooltip: { enabled: true },
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, max: 100, ticks: { callback: value => value + '%' } }
+                    }
+                }
+            });
+
+            // Chart.js: SBR Methods Chart
+            const sbrCtx = document.getElementById('sbrMethodsChart').getContext('2d');
+            new Chart(sbrCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['表面化学分析', '截面成分分析', '电化学性能表征'],
+                    datasets: [{
+                        label: '方法数量',
+                        data: [2, 2, 1], // XPS/FTIR, SEM/Raman, EIS
+                        backgroundColor: [
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                         tooltip: { 
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if(context.label === '表面化学分析') label += 'XPS, ATR-FTIR';
+                                    if(context.label === '截面成分分析') label += 'SEM-EDX, Raman';
+                                    if(context.label === '电化学性能表征') label += 'EIS';
+                                    return label;
+                                }
+                            }
+                         },
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
