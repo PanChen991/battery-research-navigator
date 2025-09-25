@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>锂电池导电剂市场调研分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 采用双标签页式仪表盘结构。第一个标签页专注于“导电剂材料特性”，第二个标签页专注于“导电剂厂商应用”，这直接对应用户的两个调研任务。这种结构分离了不同层面的信息，使用户能够聚焦于单一任务，通过并排的图表和表格进行高效的数据探索和对比。用户可通过顶部的导航按钮在两个视图之间轻松切换，每个视图都包含独立的筛选和搜索功能，以实现对复杂数据集的快速分析。之所以选择此结构，是为了提供清晰、任务驱动的用户体验，避免信息过载。 -->
+    <!-- Visualization & Content Choices: 
+        1. 材料特性视图: 目标 - 展示不同导电剂类型的分布和详细属性。呈现方式 - 一个条形图 + 一个交互式表格。交互 - 图表显示各类材料的条目数量，为用户提供宏观认知；表格展示详细数据。用户可通过下拉菜单筛选材料类型或使用关键词搜索，表格和图表将同步更新，实现数据联动探索。此设计旨在结合宏观趋势和微观细节。
+        2. 厂商应用视图: 目标 - 对比分析各导电剂厂商的产品、技术和市场应用。呈现方式 - 两个图表（厂商-材料分布条形图，电芯规格环形图） + 一个交互式表格。交互 - 条形图展示各厂商的产品线丰富度，环形图显示主流电芯应用方向。用户可通过多重筛选（厂商、材料类型）和搜索与数据交互，所有图表和表格都会动态响应，提供一个全面的市场竞争格局视图。
+        所有图表均使用Chart.js基于Canvas渲染，表格为纯HTML+Tailwind CSS，交互逻辑由原生JavaScript实现，完全符合无SVG/Mermaid的要求。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .active-nav {
+            background-color: #374151;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .inactive-nav {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            white-space: nowrap;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        thead {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        tbody tr:hover {
+            background-color: #e5e7eb;
+        }
+        .filter-input, .filter-select {
+            border: 2px solid #d1d5db;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: all 0.3s;
+        }
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">锂电池导电剂市场调研分析</h1>
+            <p class="text-lg text-gray-600 mt-2">一个关于导电剂材料特性与厂商应用的交互式仪表盘</p>
+        </header>
+
+        <nav class="flex justify-start mb-8 bg-gray-100 p-2 rounded-xl shadow-md">
+            <button id="nav-materials" class="w-full md:w-auto text-center px-6 py-3 rounded-lg text-base font-medium transition-colors duration-300 active-nav">
+                导电剂材料特性
+            </button>
+            <button id="nav-manufacturers" class="w-full md:w-auto text-center px-6 py-3 rounded-lg text-base font-medium transition-colors duration-300 inactive-nav ml-2">
+                导电剂厂商应用
+            </button>
+        </nav>
+
+        <main>
+            <div id="view-materials">
+                <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold mb-4 text-left text-gray-800">导电剂材料特性分析</h2>
+                    <p class="text-left text-gray-600 mb-6">本部分专注于各类导电剂材料本身的技术特性、应用方向和发展阶段。您可以通过下方的筛选器和图表快速了解不同材料的亮点和研究进展，或在表格中深入查看具体信息。</p>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <select id="materials-type-filter" class="filter-select w-full md:w-1/3">
+                            <option value="all">所有材料类型</option>
+                        </select>
+                        <input type="text" id="materials-search-input" class="filter-input w-full md:w-2/3" placeholder="🔍 在表格中搜索关键词 (例如: 高温, CATL, 量产)...">
+                    </div>
+
+                    <div class="mb-8">
+                        <div class="chart-container">
+                            <canvas id="materials-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="table-container rounded-lg border border-gray-200">
+                        <table id="materials-table" class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th>材料类型</th>
+                                    <th>应用方向</th>
+                                    <th>信息来源</th>
+                                    <th>材料亮点</th>
+                                    <th>目前进展</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div id="view-manufacturers" style="display: none;">
+                 <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold mb-4 text-left text-gray-800">导电剂厂商应用分析</h2>
+                     <p class="text-left text-gray-600 mb-6">本部分聚焦于主流导电剂厂商及其产品的市场应用情况。您可以探索各厂商主打的材料类型、技术优势，以及这些材料在不同电芯厂和终端产品中的具体应用。</p>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <select id="manufacturers-name-filter" class="filter-select w-full md:w-1/4">
+                            <option value="all">所有材料厂商</option>
+                        </select>
+                        <select id="manufacturers-type-filter" class="filter-select w-full md:w-1/4">
+                            <option value="all">所有材料类型</option>
+                        </select>
+                        <input type="text" id="manufacturers-search-input" class="filter-input w-full md:w-1/2" placeholder="🔍 在表格中搜索关键词 (例如: 碳管, 比亚迪, PHEV)...">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="chart-container">
+                            <canvas id="manufacturers-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="cell-format-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="table-container rounded-lg border border-gray-200">
+                        <table id="manufacturers-table" class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th>材料厂商</th>
+                                    <th>材料类型</th>
+                                    <th>材料信息</th>
+                                    <th>材料亮点</th>
+                                    <th>出货情况</th>
+                                    <th>电芯厂使用</th>
+                                    <th>电芯规格</th>
+                                    <th>电芯应用领域</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const materialsData = [
+                { type: '超导炭黑', application: '宁德时代 (CATL), 比亚迪', source: '主流材料厂', highlight: '性价比高, 基础导电网络', progress: '大规模量产' },
+                { type: '乙炔黑', application: '国轩高科, 中创新航', source: 'Denka, 狮王', highlight: '高纯度, 优异吸液性', progress: '大规模量产' },
+                { type: '科琴黑', application: 'LG, 三星SDI', source: '狮王, 阿科玛', highlight: '极高比表面积, 高导电性', progress: '量产' },
+                { type: '碳管', application: '特斯拉(4680), 蔚来', source: '天奈, OCSiAl', highlight: '长径比大, 构成长程导电网络, 降DCR, 适配硅基负极', progress: '大规模量产' },
+                { type: '超导非金属材料', application: '前沿研究, 固态电池', source: '学术论文, 专利', highlight: '探索新型导电机制, 高离子电导率', progress: '预研' },
+                { type: '石烯', application: '广汽埃安', source: '格瑞芬, 学术界', highlight: '二维片状结构, 极大比表面积, 快速充电', progress: '小批量应用' },
+                { type: '复合浆料', application: 'SKI, 蜂巢能源', source: '天奈, 卡博特', highlight: '碳管+炭黑, 协同效应, 点线面结合', progress: '量产' },
+                { type: '分散剂', application: '所有使用新型导电剂的电芯厂', source: '瑞泰新材, 陶氏', highlight: '改善碳管/石烯分散, 提升浆料稳定性', progress: '量产' },
+                { type: '新型锂电导电材料', application: '固态电池, 锂金属电池', source: '专利, 初创公司', highlight: '兼顾离子和电子导电, 柔性导电骨架', progress: '实验室阶段' },
+                { type: '导电剂搭配', application: '高端动力电池, 长循环储能', source: '电芯厂内部研发', highlight: '多维度导电网络, 改善循环和倍率性能', progress: '量产应用' },
+                { type: '复合导电剂模型', application: '仿真设计, 性能预测', source: '学术论文, COMSOL', highlight: '指导配方开发, 优化导电路径', progress: '研究阶段' },
+                { type: '导电剂改善', application: '高镍正极, 硅碳负极', source: '材料厂研发', highlight: '表面改性, 提升与活性物质的相容性', progress: '持续改进' }
+            ];
+
+            const manufacturersData = [
+                { name: '天奈科技', type: '碳管', info: '多代碳纳米管产品', highlight: '行业龙头, 产能优势, 降DCR, 适配硅基', ship: '大规模出货', cell_maker: 'CATL, 比亚迪, ATL', format: '圆柱, 软包', field: 'EV, 3C' },
+                { name: '卡博特', type: '超导炭黑, 复合浆料', info: 'LITX系列导电炭黑', highlight: '传统巨头, 品质稳定, 提供一体化浆料方案', ship: '大规模出货', cell_maker: 'LG, 松下', format: '圆柱, 方壳', field: 'EV, 储能' },
+                { name: '大晟纳米科技', type: '碳管', info: '高纯度碳纳米管', highlight: '技术驱动, 高长径比, 优异分散性', ship: '批量出货', cell_maker: '中创新航, 亿纬锂能', format: '软包, 方壳', field: 'EV' },
+                { name: '格瑞芬', type: '石烯', info: '单层石烯', highlight: '石烯产业化先驱, 提升快充性能', ship: '少量出货', cell_maker: '广汽埃安', format: '软包', field: '高端EV' },
+                { name: 'OCSIAl', type: '碳管', info: 'TUBALL™单壁碳纳米管', highlight: '单壁管技术领先, 极低添加量, 高导电性', ship: '批量出货', cell_maker: '比亚迪, 特斯拉供应链', format: '圆柱(4680)', field: 'EV' },
+                { name: '万鑫', type: '碳管', info: '碳纳米管粉体和浆料', highlight: '成本优势, 快速成长的国内厂商', ship: '批量出货', cell_maker: '国轩高科, 孚能科技', format: '方壳, 软包', field: 'EV, PHEV' },
+                { name: '无锡东恒', type: '碳管', info: '碳纳米管导电浆料', highlight: '专注于导电浆料, 分散技术有特色', ship: '批量出货', cell_maker: '部分二线电芯厂', format: '软包', field: '3C, 小动力' },
+                { name: '纳米港', type: '碳管', info: '多壁碳纳米管', highlight: '产学研结合, 产品纯度高', ship: '小批量出货', cell_maker: '欣旺达', format: '软包', field: '3C' },
+                { name: '集越纳米', type: '碳管, 石烯', info: '提供多种新型导电剂', highlight: '产品线丰富, 复合导电剂是亮点', ship: '小批量出货', cell_maker: '部分储能客户', format: '方壳', field: '储能' },
+                { name: '瑞泰新材', type: '分散剂', info: '配合新型导电剂的助剂', highlight: '提升浆料稳定性, 改善加工性能', ship: '大规模出货', cell_maker: '多数主流电芯厂', format: '通用', field: 'EV, 储能, 3C' },
+                { name: '黑猫股份', type: '乙炔黑, 超导炭黑', info: '传统炭黑产品', highlight: '国内炭黑老牌企业, 规模和成本优势', ship: '大规模出货', cell_maker: '多家电芯厂', format: '方壳', field: '储能, 低速车' },
+                { name: '益瑞石', type: '超导炭黑', info: '高性能导电炭黑', highlight: '原IMERYS, 高端炭黑市场重要参与者', ship: '大规模出货', cell_maker: '三星SDI, SKI', format: '软包, 圆柱', field: 'EV' },
+                { name: '和兴化工', type: '乙炔黑', info: '电池级乙炔黑', highlight: '国内乙炔黑主要供应商', ship: '大规模出货', cell_maker: '国内多家电芯厂', format: '方壳, 软包', field: 'PHEV, 3C' },
+                { name: '狮王', type: '科琴黑', info: 'Ketjenblack系列', highlight: '科琴黑技术领先者, 极高导电效率', ship: '大规模出货', cell_maker: 'LG, CATL (高端产品)', format: '软包', field: '高端EV, 3C' },
+                { name: 'Denka', type: '乙炔黑', info: 'DENKA BLACK®', highlight: '高品质乙炔黑代表, 吸液保液性能优异', ship: '大规模出货', cell_maker: '松下, LG', format: '圆柱', field: 'EV' },
+                { name: '碳寻', type: '碳管', info: '新型碳纳米管', highlight: '初创公司, 技术路线有创新', ship: '研发/中试', cell_maker: '合作研发', format: '通用', field: '下一代电池' }
+            ];
+
+            const navMaterials = document.getElementById('nav-materials');
+            const navManufacturers = document.getElementById('nav-manufacturers');
+            const viewMaterials = document.getElementById('view-materials');
+            const viewManufacturers = document.getElementById('view-manufacturers');
+
+            let currentView = 'materials';
+            let materialsChart, manufacturersChart, cellFormatChart;
+
+            function switchView(view) {
+                currentView = view;
+                if (view === 'materials') {
+                    viewMaterials.style.display = 'block';
+                    viewManufacturers.style.display = 'none';
+                    navMaterials.classList.add('active-nav');
+                    navMaterials.classList.remove('inactive-nav');
+                    navManufacturers.classList.add('inactive-nav');
+                    navManufacturers.classList.remove('active-nav');
+                } else {
+                    viewMaterials.style.display = 'none';
+                    viewManufacturers.style.display = 'block';
+                    navManufacturers.classList.add('active-nav');
+                    navManufacturers.classList.remove('inactive-nav');
+                    navMaterials.classList.add('inactive-nav');
+                    navMaterials.classList.remove('active-nav');
+                }
+            }
+
+            navMaterials.addEventListener('click', () => switchView('materials'));
+            navManufacturers.addEventListener('click', () => switchView('manufacturers'));
+
+            function populateFilter(selectElement, data, key) {
+                const uniqueValues = [...new Set(data.map(item => item[key]))].sort();
+                uniqueValues.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            function debounce(func, delay) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+            
+            function renderMaterialsTable(data) {
+                const tableBody = document.getElementById('materials-table').querySelector('tbody');
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.type}</td>
+                        <td>${item.application}</td>
+                        <td>${item.source}</td>
+                        <td>${item.highlight}</td>
+                        <td>${item.progress}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function updateMaterialsChart(data) {
+                const typeCounts = data.reduce((acc, item) => {
+                    acc[item.type] = (acc[item.type] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const sortedTypes = Object.keys(typeCounts).sort((a, b) => typeCounts[b] - typeCounts[a]);
+                const chartLabels = sortedTypes;
+                const chartData = sortedTypes.map(type => typeCounts[type]);
+
+                if (materialsChart) {
+                    materialsChart.data.labels = chartLabels;
+                    materialsChart.data.datasets[0].data = chartData;
+                    materialsChart.update();
+                }
+            }
+            
+            function filterAndRenderMaterials() {
+                const typeFilter = document.getElementById('materials-type-filter').value;
+                const searchInput = document.getElementById('materials-search-input').value.toLowerCase();
+                
+                let filteredData = materialsData;
+
+                if (typeFilter !== 'all') {
+                    filteredData = filteredData.filter(item => item.type === typeFilter);
+                }
+
+                if (searchInput) {
+                    filteredData = filteredData.filter(item => 
+                        Object.values(item).some(val => val.toString().toLowerCase().includes(searchInput))
+                    );
+                }
+                
+                renderMaterialsTable(filteredData);
+                updateMaterialsChart(filteredData);
+            }
+
+            function renderManufacturersTable(data) {
+                const tableBody = document.getElementById('manufacturers-table').querySelector('tbody');
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.type}</td>
+                        <td>${item.info}</td>
+                        <td>${item.highlight}</td>
+                        <td>${item.ship}</td>
+                        <td>${item.cell_maker}</td>
+                        <td>${item.format}</td>
+                        <td>${item.field}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function updateManufacturersCharts(data) {
+                const nameCounts = data.reduce((acc, item) => {
+                    acc[item.name] = (acc[item.name] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const sortedNames = Object.keys(nameCounts).sort((a,b) => nameCounts[b] - nameCounts[a]);
+                const manuChartLabels = sortedNames;
+                const manuChartData = sortedNames.map(name => nameCounts[name]);
+
+                if (manufacturersChart) {
+                    manufacturersChart.data.labels = manuChartLabels;
+                    manufacturersChart.data.datasets[0].data = manuChartData;
+                    manufacturersChart.update();
+                }
+
+                const formatCounts = data.reduce((acc, item) => {
+                    const formats = item.format.split(',').map(f => f.trim());
+                    formats.forEach(format => {
+                        if(format) acc[format] = (acc[format] || 0) + 1;
+                    });
+                    return acc;
+                }, {});
+
+                const cellFormatLabels = Object.keys(formatCounts);
+                const cellFormatData = Object.values(formatCounts);
+                
+                if(cellFormatChart) {
+                    cellFormatChart.data.labels = cellFormatLabels;
+                    cellFormatChart.data.datasets[0].data = cellFormatData;
+                    cellFormatChart.update();
+                }
+            }
+
+            function filterAndRenderManufacturers() {
+                const nameFilter = document.getElementById('manufacturers-name-filter').value;
+                const typeFilter = document.getElementById('manufacturers-type-filter').value;
+                const searchInput = document.getElementById('manufacturers-search-input').value.toLowerCase();
+                
+                let filteredData = manufacturersData;
+
+                if (nameFilter !== 'all') {
+                    filteredData = filteredData.filter(item => item.name === nameFilter);
+                }
+                
+                if (typeFilter !== 'all') {
+                    filteredData = filteredData.filter(item => item.type === typeFilter);
+                }
+
+                if (searchInput) {
+                    filteredData = filteredData.filter(item => 
+                        Object.values(item).some(val => val.toString().toLowerCase().includes(searchInput))
+                    );
+                }
+                
+                renderManufacturersTable(filteredData);
+                updateManufacturersCharts(filteredData);
+            }
+
+            function createCharts() {
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#374151'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            titleColor: '#f9fafb',
+                            bodyColor: '#f9fafb'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#4b5563' },
+                            grid: { color: 'rgba(209, 213, 219, 0.5)' }
+                        },
+                        y: {
+                            ticks: { color: '#4b5563' },
+                            grid: { color: 'rgba(209, 213, 219, 0.5)' }
+                        }
+                    }
+                };
+                
+                const materialsCtx = document.getElementById('materials-chart').getContext('2d');
+                materialsChart = new Chart(materialsCtx, {
+                    type: 'bar',
+                    data: { labels: [], datasets: [{ label: '材料类型分布', data: [], backgroundColor: '#6b7280' }] },
+                    options: { ...chartOptions, indexAxis: 'y' }
+                });
+                
+                const manufacturersCtx = document.getElementById('manufacturers-chart').getContext('2d');
+                manufacturersChart = new Chart(manufacturersCtx, {
+                    type: 'bar',
+                    data: { labels: [], datasets: [{ label: '各厂商材料条目数', data: [], backgroundColor: '#ef4444' }] },
+                    options: chartOptions
+                });
+
+                const cellFormatCtx = document.getElementById('cell-format-chart').getContext('2d');
+                cellFormatChart = new Chart(cellFormatCtx, {
+                    type: 'doughnut',
+                    data: { labels: [], datasets: [{ label: '电芯规格分布', data: [], backgroundColor: ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899'] }] },
+                    options: { ...chartOptions, scales: {} }
+                });
+            }
+            
+            populateFilter(document.getElementById('materials-type-filter'), materialsData, 'type');
+            populateFilter(document.getElementById('manufacturers-name-filter'), manufacturersData, 'name');
+            populateFilter(document.getElementById('manufacturers-type-filter'), manufacturersData, 'type');
+            
+            document.getElementById('materials-type-filter').addEventListener('change', filterAndRenderMaterials);
+            document.getElementById('materials-search-input').addEventListener('input', debounce(filterAndRenderMaterials, 300));
+            document.getElementById('manufacturers-name-filter').addEventListener('change', filterAndRenderManufacturers);
+            document.getElementById('manufacturers-type-filter').addEventListener('change', filterAndRenderManufacturers);
+            document.getElementById('manufacturers-search-input').addEventListener('input', debounce(filterAndRenderManufacturers, 300));
+
+            createCharts();
+            filterAndRenderMaterials();
+            filterAndRenderManufacturers();
+            switchView('materials');
+        });
+    </script>
+</body>
+</html>
+

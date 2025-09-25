@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电池箔材技术与市场洞察平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: 采用双选项卡（Tab）的导航结构，分别对应“材料特性调研”和“材料厂商调研”两个核心任务。这种设计能清晰地分离两大块内容，使用户可以专注于一个任务，避免信息过载。每个选项卡内部都包含强大的过滤器和搜索框，允许用户根据具体需求（如材料类型、电芯厂）动态筛选数据。数据展示采用交互式表格，直观且信息密度高。整体用户流为：选择调研方向（Tab） -> 设定筛选条件 -> 查看/搜索具体数据 -> 从总结图表中获取宏观洞察。这个结构将复杂的调研数据转化为一个可探索的、以用户任务为中心的工具，极大地提升了可用性。 -->
+    <!-- Visualization & Content Choices: 
+        1. 材料特性数据 -> 目标: 组织和比较 -> 方式: 交互式HTML表格 -> 交互: 按材料类型筛选、关键词搜索 -> 理由: 表格结构清晰，筛选和搜索功能可以快速定位和对比不同材料的技术细节。
+        2. 材料研发进展 -> 目标: 宏观展示 -> 方式: 饼图 (Chart.js/Canvas) -> 交互: 动态更新，反映筛选结果 -> 理由: 直观展示“量产”与“预研”的比例，快速把握各类材料的技术成熟度。
+        3. 厂商数据 -> 目标: 组织和查询 -> 方式: 交互式HTML表格 -> 交互: 按厂商、材料类型、电芯厂筛选，关键词搜索 -> 理由: 面对众多供应商，多维度筛选是最高效的探索方式，便于用户找到特定供应链信息。
+        4. 厂商应用领域 -> 目标: 比较分布 -> 方式: 柱状图 (Chart.js/Canvas) -> 交互: 动态更新，反映筛选结果 -> 理由: 清晰对比不同厂商或材料在各应用领域（如EV, PHEV, 储能）的分布情况，揭示市场焦点。
+        所有图表均使用Chart.js渲染于Canvas，确保无SVG依赖，并严格遵循容器约束以实现响应式布局。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+            background-color: #fdfdfc;
+            color: #333;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-button.active {
+            color: #c084fc;
+            border-bottom-color: #c084fc;
+        }
+        .table-container {
+            overflow-x: auto;
+            max-height: 60vh;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        table {
+            width: 100%;
+            white-space: nowrap;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        thead {
+            background-color: #fafafa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tbody tr:hover {
+            background-color: #f5f3ff;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-purple-600">电池箔材技术与市场洞察平台</h1>
+            <p class="text-gray-600 mt-2">一份关于电芯研发中关键箔材特性与主流供应商的交互式调研报告</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button id="tab-materials" class="tab-button active text-lg font-semibold py-4 px-6">材料特性调研</button>
+            <button id="tab-suppliers" class="tab-button text-lg font-semibold py-4 px-6">材料厂商调研</button>
+        </nav>
+
+        <main>
+            <div id="view-materials">
+                <section class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">箔材特性综合分析</h2>
+                    <p class="text-gray-600 mb-6">本部分深入探讨各类电池箔材的核心技术特性。您可以利用下方的过滤器和搜索框，快速定位特定材料类型的详细信息，包括其技术亮点、工艺路线、当前进展以及在不同电芯规格中的应用情况。右侧的图表直观地展示了当前筛选条件下，各类材料的技术成熟度分布。</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="lg:col-span-2">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-700">筛选与搜索</h3>
+                            <div class="flex flex-wrap gap-4">
+                                <div class="flex-grow">
+                                    <label for="material-type-filter" class="block text-sm font-medium text-gray-700">材料类型</label>
+                                    <select id="material-type-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                                        <option value="all">所有类型</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow">
+                                    <label for="material-search" class="block text-sm font-medium text-gray-700">关键词搜索</label>
+                                    <input type="text" id="material-search" placeholder="搜索..." class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">技术进展分布</h3>
+                            <div class="chart-container">
+                                <canvas id="materials-progress-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="materials-table-container" class="table-container"></div>
+                </section>
+            </div>
+
+            <div id="view-suppliers" class="hidden">
+                 <section class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">主流箔材厂商分析</h2>
+                    <p class="text-gray-600 mb-6">本部分聚焦于市场上的主流箔材供应商。通过下方的多维度过滤器，您可以快速筛选出特定厂商的产品信息、技术亮点、出货情况以及其与下游电芯厂的合作关系。右侧的图表展示了在当前筛选条件下，产品在不同终端领域的应用分布情况，帮助您洞察市场趋势。</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="lg:col-span-2">
+                             <h3 class="text-xl font-semibold mb-4 text-gray-700">筛选与搜索</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="supplier-filter" class="block text-sm font-medium text-gray-700">材料厂商</label>
+                                    <select id="supplier-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                                        <option value="all">所有厂商</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="supplier-material-type-filter" class="block text-sm font-medium text-gray-700">材料类型</label>
+                                    <select id="supplier-material-type-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                                        <option value="all">所有类型</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="supplier-search" class="block text-sm font-medium text-gray-700">关键词搜索</label>
+                                    <input type="text" id="supplier-search" placeholder="搜索..." class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">电芯应用领域分布</h3>
+                             <div class="chart-container">
+                                <canvas id="suppliers-application-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="suppliers-table-container" class="table-container"></div>
+                </section>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>&copy; 2025 电池箔材技术研究. All rights reserved.</p>
+            <p>数据来源为公开信息、行业报告及专利分析，仅供参考。</p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const materialData = [
+        { type: "复合铜箔", application: "宁德时代麒麟电池, 特斯拉4680", source: "材料厂, 专利", highlights: "高安全(过针刺), 高能量密度(减重), 长循环寿命", progress: "量产", process: "一步法(磁控溅射/蒸镀), 两步法", issues: "良率提升中, 剥离强度持续改善", cellSpec: "圆柱, 软包, 方壳", tab: "超声波滚焊, 激光焊" },
+        { type: "复合铝箔", application: "比亚迪刀片电池, 孚能科技", source: "材料厂, 文章", highlights: "高安全, 降成本, 提升能量密度", progress: "预研", process: "两步法(PET/PP基膜+镀铝)", issues: "导电性、过流能力是关键", cellSpec: "软包, 方壳", tab: "冷压焊+激光焊" },
+        { type: "铝箔", application: "所有锂离子电池正极", source: "材料厂", highlights: "技术成熟, 成本低, 导电性好", progress: "量产", process: "铸轧-冷轧-退火-精轧", issues: "厚度均匀性, 表面张力控制", cellSpec: "圆柱, 软包, 方壳", tab: "超声波滚焊" },
+        { type: "铜箔", application: "所有锂离子电池负极", source: "材料厂", highlights: "技术成熟, 导电性优异", progress: "量产", process: "电解法, 压延法", issues: "超薄箔材制造难度大", cellSpec: "圆柱, 软包, 方壳", tab: "超声波点焊/滚焊" },
+        { type: "集流体", application: "通用概念, 指代铜/铝箔", source: "文章, 教科书", highlights: "承载活性物质, 汇集电流", progress: "量产", process: "N/A", issues: "与活性物质的结合力, 耐腐蚀性", cellSpec: "所有类型", tab: "N/A" },
+        { type: "功能涂层", application: "高端长循环电池 (如CATL, LG)", source: "专利, 文章", highlights: "提升界面稳定性, 降DCR, 抑制锂枝晶", progress: "量产", process: "在箔材表面涂覆导电剂/粘结剂/陶瓷层", issues: "涂层均匀性, 成本控制", cellSpec: "软包, 方壳", tab: "常规方式" },
+        { type: "3D集流体", application: "硅基负极, 快充电池", source: "文章, 预研报告", highlights: "提供更大比表面积, 缓冲体积膨胀", progress: "预研", process: "刻蚀, 发泡, 模板法", issues: "工艺复杂, 成本高, 机械强度", cellSpec: "圆柱, 软包", tab: "特殊激光焊" },
+        { type: "功能集流体", application: "通用概念, 指涂层/3D集流体", source: "文章", highlights: "赋予集流体额外功能(安全/性能)", progress: "预研/量产", process: "N/A", issues: "成本与性能的平衡", cellSpec: "所有类型", tab: "N/A" }
+    ];
+
+    const supplierData = [
+        { supplier: "东阳光", type: "铝箔", info: "高端电池铝箔供应商", highlights: "厚度均匀性好, 表面张力高", shipment: "批量出货", cellMaker: "CATL, 比亚迪", cellSpec: "方壳, 软包", application: "EV, 储能" },
+        { supplier: "诺德股份(优箔)", type: "铜箔", info: "锂电铜箔龙头企业", highlights: "4.5μm极薄铜箔量产", shipment: "批量出货", cellMaker: "CATL, LG, SKI", cellSpec: "圆柱, 软包", application: "EV, 3C" },
+        { supplier: "纳诺", type: "复合铜箔", info: "复合集流体新势力", highlights: "一步法工艺, 成本有优势", shipment: "少量出货", cellMaker: "多家电芯厂送样测试", cellSpec: "软包", application: "PHEV" },
+        { supplier: "南山铝业", type: "铝箔", info: "国内大型铝加工企业", highlights: "产品一致性好, 供货稳定", shipment: "批量出货", cellMaker: "比亚迪, 国轩高科", cellSpec: "方壳", application: "EV, 商用车" },
+        { supplier: "德福科技", type: "铜箔", info: "专注于电解铜箔", highlights: "高抗拉强度和高延伸率", shipment: "批量出货", cellMaker: "CATL, 欣旺达", cellSpec: "圆柱, 方壳", application: "EV, 电动工具" },
+        { supplier: "海亮股份", type: "铜箔", info: "铜加工巨头, 跨界锂电铜箔", highlights: "资金实力雄厚, 产能扩张快", shipment: "批量出货", cellMaker: "多家头部电芯厂", cellSpec: "圆柱", application: "EV" },
+        { supplier: "铜冠铜箔", type: "铜箔", info: "PCB铜箔和锂电铜箔", highlights: "技术积累深厚", shipment: "批量出货", cellMaker: "LG, 比亚迪", cellSpec: "软包, 方壳", application: "EV, 储能" },
+        { supplier: "宝明科技", type: "复合铜箔", info: "显示背光转产复合铜箔", highlights: "PET基膜, 两步法工艺", shipment: "中试线, 送样", cellMaker: "多家电芯厂送样测试", cellSpec: "圆柱, 软包", application: "EV" },
+        { supplier: "金美新材料", type: "复合铜箔", info: "专注于复合集流体研发", highlights: "良率控制有突破", shipment: "少量出货", cellMaker: "中创新航", cellSpec: "软包", application: "PHEV" },
+        { supplier: "元琛科技", type: "复合铝箔", info: "过滤材料公司转型", highlights: "预研阶段, 布局复合铝箔", shipment: "预研", cellMaker: "研发合作", cellSpec: "软包", application: "储能" },
+        { supplier: "三孚新科", type: "复合铜箔", info: "化学镀技术积累", highlights: "化学镀工艺路线", shipment: "预研", cellMaker: "送样测试", cellSpec: "软包", application: "EV" }
+    ];
+    
+    let materialProgressChart;
+    let supplierApplicationChart;
+
+    const setupFilters = (data, key, selectElementId) => {
+        const select = document.getElementById(selectElementId);
+        const uniqueValues = [...new Set(data.map(item => item[key]))];
+        uniqueValues.sort().forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+    };
+
+    const renderMaterialsTable = () => {
+        const typeFilter = document.getElementById('material-type-filter').value;
+        const searchKeyword = document.getElementById('material-search').value.toLowerCase();
+
+        const filteredData = materialData.filter(item => {
+            const matchesType = typeFilter === 'all' || item.type === typeFilter;
+            const matchesSearch = searchKeyword === '' || Object.values(item).some(val => String(val).toLowerCase().includes(searchKeyword));
+            return matchesType && matchesSearch;
+        });
+
+        const container = document.getElementById('materials-table-container');
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div class="p-6 text-center text-gray-500">未找到匹配的数据。</div>`;
+            updateMaterialsProgressChart([]);
+            return;
+        }
+
+        let tableHTML = '<table><thead><tr>';
+        const headers = ["材料类型", "应用方向", "信息来源", "材料亮点", "目前进展", "主流工艺", "问题改善", "电芯规格", "极耳处理"];
+        headers.forEach(h => tableHTML += `<th>${h}</th>`);
+        tableHTML += '</tr></thead><tbody>';
+
+        filteredData.forEach(item => {
+            tableHTML += `<tr>
+                <td>${item.type}</td>
+                <td>${item.application}</td>
+                <td>${item.source}</td>
+                <td>${item.highlights}</td>
+                <td>${item.progress}</td>
+                <td>${item.process}</td>
+                <td>${item.issues}</td>
+                <td>${item.cellSpec}</td>
+                <td>${item.tab}</td>
+            </tr>`;
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+        updateMaterialsProgressChart(filteredData);
+    };
+
+    const renderSuppliersTable = () => {
+        const supplierFilter = document.getElementById('supplier-filter').value;
+        const typeFilter = document.getElementById('supplier-material-type-filter').value;
+        const searchKeyword = document.getElementById('supplier-search').value.toLowerCase();
+        
+        const filteredData = supplierData.filter(item => {
+            const matchesSupplier = supplierFilter === 'all' || item.supplier === supplierFilter;
+            const matchesType = typeFilter === 'all' || item.type === typeFilter;
+            const matchesSearch = searchKeyword === '' || Object.values(item).some(val => String(val).toLowerCase().includes(searchKeyword));
+            return matchesSupplier && matchesType && matchesSearch;
+        });
+
+        const container = document.getElementById('suppliers-table-container');
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div class="p-6 text-center text-gray-500">未找到匹配的数据。</div>`;
+            updateSupplierApplicationChart([]);
+            return;
+        }
+        
+        let tableHTML = '<table><thead><tr>';
+        const headers = ["材料厂商", "材料类型", "材料信息", "材料亮点", "出货情况", "电芯厂使用", "电芯规格", "应用领域"];
+        headers.forEach(h => tableHTML += `<th>${h}</th>`);
+        tableHTML += '</tr></thead><tbody>';
+
+        filteredData.forEach(item => {
+            tableHTML += `<tr>
+                <td>${item.supplier}</td>
+                <td>${item.type}</td>
+                <td>${item.info}</td>
+                <td>${item.highlights}</td>
+                <td>${item.shipment}</td>
+                <td>${item.cellMaker}</td>
+                <td>${item.cellSpec}</td>
+                <td>${item.application}</td>
+            </tr>`;
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+        updateSupplierApplicationChart(filteredData);
+    };
+    
+    const updateMaterialsProgressChart = (data) => {
+        const progressCounts = data.reduce((acc, item) => {
+            acc[item.progress] = (acc[item.progress] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const labels = Object.keys(progressCounts);
+        const chartData = Object.values(progressCounts);
+
+        if (materialProgressChart) {
+            materialProgressChart.data.labels = labels;
+            materialProgressChart.data.datasets[0].data = chartData;
+            materialProgressChart.update();
+        } else {
+            const ctx = document.getElementById('materials-progress-chart').getContext('2d');
+            materialProgressChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '技术进展',
+                        data: chartData,
+                        backgroundColor: ['#a78bfa', '#c4b5fd', '#7c3aed', '#6d28d9'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw}` } }
+                    }
+                }
+            });
+        }
+    };
+
+    const updateSupplierApplicationChart = (data) => {
+        const appCounts = data.flatMap(item => item.application.split(', ')).reduce((acc, app) => {
+            acc[app] = (acc[app] || 0) + 1;
+            return acc;
+        }, {});
+
+        const labels = Object.keys(appCounts);
+        const chartData = Object.values(appCounts);
+        
+        if (supplierApplicationChart) {
+            supplierApplicationChart.data.labels = labels;
+            supplierApplicationChart.data.datasets[0].data = chartData;
+            supplierApplicationChart.update();
+        } else {
+            const ctx = document.getElementById('suppliers-application-chart').getContext('2d');
+            supplierApplicationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '应用领域案例数',
+                        data: chartData,
+                        backgroundColor: '#c084fc',
+                        borderColor: '#a855f7',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    };
+    
+    const switchTab = (activeTab) => {
+        const tabs = ['materials', 'suppliers'];
+        tabs.forEach(tab => {
+            document.getElementById(`tab-${tab}`).classList.toggle('active', tab === activeTab);
+            document.getElementById(`view-${tab}`).classList.toggle('hidden', tab !== activeTab);
+        });
+    };
+
+    document.getElementById('tab-materials').addEventListener('click', () => switchTab('materials'));
+    document.getElementById('tab-suppliers').addEventListener('click', () => switchTab('suppliers'));
+
+    document.getElementById('material-type-filter').addEventListener('change', renderMaterialsTable);
+    document.getElementById('material-search').addEventListener('input', renderMaterialsTable);
+
+    document.getElementById('supplier-filter').addEventListener('change', renderSuppliersTable);
+    document.getElementById('supplier-material-type-filter').addEventListener('change', renderSuppliersTable);
+    document.getElementById('supplier-search').addEventListener('input', renderSuppliersTable);
+
+    setupFilters(materialData, 'type', 'material-type-filter');
+    setupFilters(supplierData, 'supplier', 'supplier-filter');
+    setupFilters(supplierData, 'type', 'supplier-material-type-filter');
+
+    renderMaterialsTable();
+    renderSuppliersTable();
+});
+</script>
+
+</body>
+</html>
+

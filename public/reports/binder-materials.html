@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动力电池粘结剂市场与技术洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard with two primary, switchable views: "Analysis by Material Type" and "Analysis by Manufacturer." This tabbed structure was chosen to logically separate the two distinct but related datasets requested by the user, preventing information overload and allowing for focused analysis. Each view features its own dedicated set of interactive filters (dropdowns and a search bar) and a data table. A dedicated "Summary & Comparison" section with dynamic charts (a radar chart for material properties and a bar chart for market landscape) is placed at the top to provide high-level insights. This design facilitates a user flow from a broad overview (charts) to detailed exploration (filterable tables), making the complex data highly accessible and user-friendly. -->
+    <!-- Visualization & Content Choices: Report Info: Binder properties and manufacturer landscape. -> Goal: Inform, compare, and organize. -> Viz/Presentation Method: Interactive HTML tables for detailed data, a Radar Chart (Chart.js) for multi-axial comparison of material strengths/weaknesses, and a Bar Chart (Chart.js) for market distribution. -> Interaction: Users can switch between material and manufacturer views via tabs. Dropdown and search filters dynamically update the tables. Checkbox selections on the radar chart allow for direct visual comparison of materials. -> Justification: Tables provide granular detail, while the charts offer immediate, high-level insights that are difficult to discern from raw data alone. The radar chart is particularly effective for visualizing trade-offs between performance metrics (e.g., cycle life vs. DCR), and the bar chart clearly shows market concentration. -> Library/Method: Chart.js (Canvas-based) for all visualizations. Interactive filtering and table updates are handled with vanilla JavaScript. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #fdfcfb;
+            color: #3f3c3a;
+        }
+        .tab-active {
+            border-bottom-color: #f59e0b;
+            color: #f59e0b;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-bottom-color: transparent;
+            color: #9ca3af;
+        }
+        .table-header {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 md:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-amber-700">动力电池粘结剂市场与技术洞察</h1>
+            <p class="mt-2 text-gray-500">一个用于分析粘结剂材料特性与市场格局的交互式仪表板</p>
+        </header>
+
+        <main>
+            <section id="chartsView" class="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-100">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">数据总览与对比</h2>
+                <p class="text-gray-600 mb-6">此区域提供了粘结剂市场的宏观视角。左侧的雷达图可让您直观对比不同材料的关键性能指标，请勾选下方选项以更新图表。右侧的柱状图展示了各类粘结剂在市场上的供应商数量，反映了其技术成熟度和竞争格局。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-lg font-medium text-center text-gray-700 mb-2">关键材料性能雷达图</h3>
+                        <div class="chart-container">
+                            <canvas id="propertiesRadarChart"></canvas>
+                        </div>
+                        <div id="radar-chart-controls" class="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-center text-gray-700 mb-2">各类型粘结剂供应商数量</h3>
+                        <div class="chart-container">
+                            <canvas id="marketShareBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 md:p-6">
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex space-x-4" aria-label="Tabs">
+                        <button id="tab-material" class="px-3 py-2 font-medium text-sm rounded-t-lg border-b-2 transition-colors duration-200 ease-in-out">按材料类型分析</button>
+                        <button id="tab-manufacturer" class="px-3 py-2 font-medium text-sm rounded-t-lg border-b-2 transition-colors duration-200 ease-in-out">按材料厂商分析</button>
+                    </nav>
+                </div>
+
+                <div id="filters" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-center">
+                    <div id="material-type-filter-container">
+                        <label for="material-type-filter" class="block text-sm font-medium text-gray-700">材料类型</label>
+                        <select id="material-type-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md shadow-sm">
+                            <option value="all">所有类型</option>
+                        </select>
+                    </div>
+                     <div id="manufacturer-filter-container" class="hidden">
+                        <label for="manufacturer-filter" class="block text-sm font-medium text-gray-700">材料厂商</label>
+                        <select id="manufacturer-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md shadow-sm">
+                           <option value="all">所有厂商</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-1">
+                         <label for="search-input" class="block text-sm font-medium text-gray-700">关键词搜索</label>
+                         <input type="text" id="search-input" placeholder="在表格内搜索..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div id="view-container" class="overflow-x-auto">
+                    <section id="material-view">
+                        <p class="text-sm text-gray-600 mb-4">此表格详细列出了不同类型粘结剂的核心特性。您可以利用上方的筛选器和搜索框快速定位您感兴趣的材料，并点击表头对数据进行排序。</p>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料类型</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">应用方向</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">信息来源方向</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料亮点</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">目前进展</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料风险项</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">价格</th>
+                                </tr>
+                            </thead>
+                            <tbody id="material-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="manufacturer-view" class="hidden">
+                        <p class="text-sm text-gray-600 mb-4">此表格展示了全球主要粘结剂厂商的产品布局、应用及市场情况。您可以筛选特定厂商或材料类型，以了解其在产业链中的位置。</p>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料厂商</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料类型</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料信息</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料亮点</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">应用出货情况</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">电芯厂使用情况</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">应用电芯规格</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">电芯应用领域</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">材料风险项</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manufacturer-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const materialData = [
+        { type: 'PAA', application: '硅基负极, LFP正极', source: '文章, 专利', highlight: '高粘结力, 提升循环', progress: '量产/预研', risk: '脆性大, 吸水', price: '中' },
+        { type: 'PU', application: '硅基负极', source: '材料厂, 文章', highlight: '高弹性, 抑制体积膨胀', progress: '预研', risk: '成本高, 电化学稳定性', price: '高' },
+        { type: 'PI', application: '高端硅基负极, 高温电池', source: '专利, 材料厂', highlight: '耐高温, 机械性能好', progress: '预研/小批量', risk: '成本极高, 加工复杂', price: '极高' },
+        { type: 'PVDF', application: 'NCM/NCA正极, LFP正极', source: '材料厂', highlight: '电化学稳定性好, 通用性强', progress: '大规模量产', risk: '需NMP溶剂, 环保问题', price: '高' },
+        { type: 'SBR', application: '石墨负极, 硅氧负极', source: '材料厂', highlight: '成本低, 弹性好', progress: '大规模量产', risk: '高温性能差, 产气', price: '低' },
+        { type: '苯丙', application: '石墨负极', source: '材料厂', highlight: '低成本, 综合性能均衡', progress: '量产', risk: '循环性能一般', price: '低' },
+        { type: 'CMC', application: '石墨/硅氧负极 (作增稠剂)', source: '材料厂', highlight: '水系, 环保, 增稠效果好', progress: '大规模量产', risk: '本身无粘性, 易霉变', price: '低' },
+        { type: 'PAA+CNT', application: '高能量密度电芯', source: '专利, 预研机构', highlight: '导电+粘结一体, 降内阻', progress: '预研', risk: '分散难, 成本高', price: '极高' },
+        { type: 'PSS:PEDOT', application: '快充电池, LTO', source: '文章, 材料厂', highlight: '高导电性, 改善倍率', progress: '预研/小批量', risk: '电化学窗口窄, 稳定性', price: '极高' }
+    ];
+
+    const manufacturerData = [
+        { manufacturer: '蓝海黑石', type: 'PAA, PI', info: '专注新型硅基负极粘结剂', highlight: '提升首效和循环寿命', shipment: '小批量出货', cell_user: '国内头部电芯厂', spec: '圆柱, 软包', field: '高端EV', risk: '成本较高, 产业化验证' },
+        { manufacturer: '茵地乐', type: 'SBR, PAA', info: '全球领先的负极粘结剂供应商', highlight: '产品一致性好, 性能稳定', shipment: '大规模出货', cell_user: '三星SDI, LGES', spec: '圆柱, 软包, 方壳', field: 'EV, 消费电子', risk: '价格竞争激烈' },
+        { manufacturer: '安普瑞斯', type: '自有技术', info: '硅纳米线负极技术', highlight: '极高的能量密度', shipment: '少量出货', cell_user: '自用为主', spec: '软包', field: '无人机, 航空航天', risk: '成本极高, 循环待提升' },
+        { manufacturer: '住友', type: 'CMC', info: '高性能CMC供应商', highlight: '纯度高, 分子量可控', shipment: '大规模出货', cell_user: '松下, CATL', spec: '圆柱, 方壳', field: 'EV', risk: '市场竞争激烈' },
+        { manufacturer: '瑞翁', type: 'SBR', info: '负极水性粘结剂的开创者', highlight: '产品系列广, 市场占有率高', shipment: '大规模出货', cell_user: '几乎所有主流电芯厂', spec: '圆柱, 方壳, 软包', field: 'EV, PHEV, 储能', risk: '新产品迭代速度' },
+        { manufacturer: 'DKS', type: 'PAA, CMC', info: '日本精细化工企业', highlight: '高分子设计能力强', shipment: '批量出货', cell_user: '日韩电芯厂', spec: '圆柱, 软包', field: '消费电子, EV', risk: '国内市场份额有限' },
+        { manufacturer: '东亚合成', type: '丙烯酸类', info: '特种丙烯酸聚合物', highlight: '功能性单体合成技术', shipment: '批量出货', cell_user: '日系电芯厂', spec: '软包', field: '消费电子', risk: '价格较高' },
+        { manufacturer: '爱敬化学', type: 'SBR, NBR', info: '韩国主要化学品公司', highlight: '性价比高', shipment: '批量出货', cell_user: 'LGES, SK On', spec: '软包, 方壳', field: 'EV', risk: '技术领先性' },
+        { manufacturer: '天赐', type: '电解液添加剂, 粘结剂', info: '从电解液横向拓展', highlight: '产业链一体化优势', shipment: '少量出货', cell_user: '国内二线电芯厂', spec: '方壳', field: '储能', risk: '产品性能验证' },
+        { manufacturer: '好电', type: 'PAA, SBR', info: '国内负极粘结剂主要供应商', highlight: '响应速度快, 定制化能力', shipment: '批量出货', cell_user: '比亚迪, 中创新航', spec: '方壳', field: 'PHEV, EV', risk: '高端产品突破' },
+        { manufacturer: '研一', type: 'PAA, PI', info: '专注新型粘结剂研发', highlight: '与下游深度绑定开发', shipment: '小批量出货', cell_user: '国内头部电芯厂', spec: '圆柱', field: '高端EV', risk: '产能和成本' },
+        { manufacturer: '道赢', type: '导电粘结剂', info: '导电剂+粘结剂一体化方案', highlight: '简化工艺, 提升性能', shipment: '预研/送样', cell_user: '多家头部厂测试中', spec: '软包, 圆柱', field: '快充EV', risk: '分散工艺, 成本' },
+        { manufacturer: '巴斯夫', type: 'SBR, PAA', info: '化工巨头, 全面解决方案', highlight: '全球化供应, 研发实力强', shipment: '大规模出货', cell_user: 'CATL, Northvolt', spec: '方壳, 软包', field: 'EV, 储能', risk: '价格偏高' },
+        { manufacturer: '大赛璐', type: 'CMC', info: '特种CMC材料', highlight: '高取代度, 溶解性好', shipment: '批量出货', cell_user: '松下, AESC', spec: '圆柱', field: 'EV', risk: '市场竞争' },
+        { manufacturer: 'A&L', type: 'SBR', info: '韩国供应商', highlight: '性价比', shipment: '批量出货', cell_user: '韩系电芯厂', spec: '软包', field: 'EV', risk: '技术壁垒不高' },
+        { manufacturer: '泓昌新材', type: 'PAA', info: '国内PAA研发先行者', highlight: '专注硅基负极PAA', shipment: '批量出货', cell_user: '国内多家电芯厂', spec: '圆柱, 软包', field: '消费电子, EV', risk: '产品线单一' },
+        { manufacturer: '苏威', type: 'PVDF', info: '高性能聚合物领导者', highlight: '高分子量, 耐电解液腐蚀', shipment: '大规模出货', cell_user: 'LGES, CATL', spec: '软包, 方壳', field: 'EV, 高端储能', risk: '价格高昂, 供应紧张' },
+        { manufacturer: '孚诺林', type: 'PVDF', info: '国产PVDF主要供应商', highlight: '性价比优势, 国产替代', shipment: '批量出货', cell_user: '比亚迪, 亿纬锂能', spec: '方壳', field: 'PHEV, EV', risk: '高端牌号性能' },
+        { manufacturer: '万华', type: 'PU', info: '聚氨酯全球龙头', highlight: '探索PU在电池中应用', shipment: '预研', cell_user: '合作开发', spec: '软包', field: '下一代电池', risk: '电化学稳定性, 成本' },
+        { manufacturer: '东阳光', type: 'PVDF', info: '电子材料产业链延伸', highlight: '国产替代', shipment: '小批量出货', cell_user: '国内电芯厂', spec: '方壳', field: '储能', risk: '技术积累' },
+        { manufacturer: '阿科玛', type: 'PVDF', info: '全球三大PVDF供应商之一', highlight: '牌号齐全, 技术领先', shipment: '大规模出货', cell_user: '几乎所有主流电芯厂', spec: '圆柱, 软包, 方壳', field: 'EV, 消费电子', risk: '供应紧张' },
+        { manufacturer: '中化蓝天', type: 'PVDF', info: '氟化工国家队', highlight: '国产替代核心力量', shipment: '批量出货', cell_user: '国内主流电芯厂', spec: '方壳, 圆柱', field: 'EV, 储能', risk: '高端牌号研发' },
+        { manufacturer: '吴羽', type: 'PVDF', info: '独特的悬浮聚合法工艺', highlight: '高结晶度, 性能优异', shipment: '大规模出货', cell_user: '松下, LGES', spec: '圆柱', field: '高端EV', risk: '产能有限, 价格高' },
+        { manufacturer: '回天', type: 'PU', info: '胶粘剂龙头企业', highlight: '跨领域技术应用', shipment: '预研', cell_user: '合作开发', spec: '软包', field: '下一代电池', risk: '产业化路径不明确' },
+        { manufacturer: '长兴', type: '特种树脂', info: '台湾化工企业', highlight: '定制化开发能力', shipment: '少量出货', cell_user: '台系电芯厂', spec: '软包', field: '消费电子', risk: '大陆市场拓展' },
+        { manufacturer: '陕西煤化工', type: 'PVDF', info: '依托资源优势布局', highlight: '成本潜力', shipment: '建设中/小批量', cell_user: '国内电芯厂', spec: '方壳', field: '储能', risk: '技术与品质管控' },
+        { manufacturer: '韩松', type: 'CMC', info: '韩国纸业巨头跨界', highlight: '规模化生产能力', shipment: '批量出货', cell_user: '三星SDI, SK On', spec: '方壳, 软包', field: 'EV', risk: '技术专业性' },
+        { manufacturer: '联泓新材', type: 'PVDF', info: '新材料上市公司', highlight: 'EVA技术协同', shipment: '建设中/小批量', cell_user: '国内电芯厂', spec: '方壳', field: '储能', risk: '技术与品质管控' }
+    ];
+    
+    let currentView = 'material';
+    const materialTableBody = document.getElementById('material-table-body');
+    const manufacturerTableBody = document.getElementById('manufacturer-table-body');
+    const materialView = document.getElementById('material-view');
+    const manufacturerView = document.getElementById('manufacturer-view');
+    const tabMaterial = document.getElementById('tab-material');
+    const tabManufacturer = document.getElementById('tab-manufacturer');
+    const materialTypeFilter = document.getElementById('material-type-filter');
+    const manufacturerFilter = document.getElementById('manufacturer-filter');
+    const materialTypeFilterContainer = document.getElementById('material-type-filter-container');
+    const manufacturerFilterContainer = document.getElementById('manufacturer-filter-container');
+    const searchInput = document.getElementById('search-input');
+    
+    function populateFilters() {
+        const materialTypes = [...new Set(materialData.map(item => item.type))];
+        const manufacturers = [...new Set(manufacturerData.map(item => item.manufacturer))];
+
+        materialTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            materialTypeFilter.appendChild(option);
+        });
+
+        manufacturers.sort().forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            manufacturerFilter.appendChild(option);
+        });
+    }
+
+    function renderMaterialTable(data) {
+        materialTableBody.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-amber-50 transition-colors duration-150";
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.type}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.application}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.source}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.highlight}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.progress}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">${item.risk}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.price}</td>
+            `;
+            materialTableBody.appendChild(row);
+        });
+    }
+
+    function renderManufacturerTable(data) {
+        manufacturerTableBody.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-amber-50 transition-colors duration-150";
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.manufacturer}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.type}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.info}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.highlight}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.shipment}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.cell_user}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.spec}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.field}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-500">${item.risk}</td>
+            `;
+            manufacturerTableBody.appendChild(row);
+        });
+    }
+
+    function switchView(view) {
+        currentView = view;
+        if (view === 'material') {
+            materialView.classList.remove('hidden');
+            manufacturerView.classList.add('hidden');
+            tabMaterial.classList.add('tab-active');
+            tabMaterial.classList.remove('tab-inactive');
+            tabManufacturer.classList.remove('tab-active');
+            tabManufacturer.classList.add('tab-inactive');
+            
+            materialTypeFilterContainer.classList.remove('hidden');
+            manufacturerFilterContainer.classList.add('hidden');
+            manufacturerFilter.value = 'all';
+        } else {
+            materialView.classList.add('hidden');
+            manufacturerView.classList.remove('hidden');
+            tabMaterial.classList.remove('tab-active');
+            tabMaterial.classList.add('tab-inactive');
+            tabManufacturer.classList.add('tab-active');
+            tabManufacturer.classList.remove('tab-inactive');
+            
+            materialTypeFilterContainer.classList.remove('hidden');
+            manufacturerFilterContainer.classList.remove('hidden');
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const materialType = materialTypeFilter.value;
+        const manufacturer = manufacturerFilter.value;
+        const searchTerm = searchInput.value.toLowerCase();
+
+        if (currentView === 'material') {
+            let filteredData = materialData;
+            if (materialType !== 'all') {
+                filteredData = filteredData.filter(item => item.type === materialType);
+            }
+            if (searchTerm) {
+                filteredData = filteredData.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm)));
+            }
+            renderMaterialTable(filteredData);
+        } else {
+            let filteredData = manufacturerData;
+            if (materialType !== 'all') {
+                filteredData = filteredData.filter(item => item.type.includes(materialType));
+            }
+            if (manufacturer !== 'all') {
+                filteredData = filteredData.filter(item => item.manufacturer === manufacturer);
+            }
+            if (searchTerm) {
+                filteredData = filteredData.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm)));
+            }
+            renderManufacturerTable(filteredData);
+        }
+    }
+    
+    let propertiesRadarChart, marketShareBarChart;
+
+    const radarChartDataMapping = {
+        'PAA':       { score: [4, 3, 2, 4, 3, 2], color: 'rgba(255, 99, 132, 0.5)' },
+        'PU':        { score: [5, 2, 3, 5, 2, 1], color: 'rgba(54, 162, 235, 0.5)' },
+        'PI':        { score: [5, 5, 1, 5, 1, 1], color: 'rgba(255, 206, 86, 0.5)' },
+        'PVDF':      { score: [3, 4, 5, 2, 5, 2], color: 'rgba(75, 192, 192, 0.5)' },
+        'SBR':       { score: [3, 1, 5, 3, 5, 5], color: 'rgba(153, 102, 255, 0.5)' },
+        '导电粘结剂': { score: [4, 4, 2, 3, 2, 1], color: 'rgba(255, 159, 64, 0.5)' },
+    };
+
+    function initCharts() {
+        const radarCtx = document.getElementById('propertiesRadarChart').getContext('2d');
+        const radarLabels = ['粘结力', '耐高温', '成本优势', '循环提升', '成熟度', '工艺风险'];
+        
+        const radarChartControls = document.getElementById('radar-chart-controls');
+        const defaultSelections = ['PVDF', 'SBR', 'PAA'];
+
+        Object.keys(radarChartDataMapping).forEach(material => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `radar-${material}`;
+            checkbox.value = material;
+            checkbox.className = 'h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500';
+            if(defaultSelections.includes(material)) {
+                checkbox.checked = true;
+            }
+            checkbox.addEventListener('change', updateRadarChart);
+
+            const label = document.createElement('label');
+            label.htmlFor = `radar-${material}`;
+            label.textContent = material;
+            label.className = 'ml-2 block text-sm text-gray-900';
+            
+            const swatch = document.createElement('span');
+            swatch.className = 'w-3 h-3 rounded-full ml-2';
+            swatch.style.backgroundColor = radarChartDataMapping[material].color.replace('0.5', '1');
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            div.appendChild(swatch);
+            radarChartControls.appendChild(div);
+        });
+
+        const initialDatasets = defaultSelections.map(material => ({
+                label: material,
+                data: radarChartDataMapping[material].score,
+                backgroundColor: radarChartDataMapping[material].color,
+                borderColor: radarChartDataMapping[material].color.replace('0.5', '1'),
+                borderWidth: 1,
+                pointBackgroundColor: radarChartDataMapping[material].color.replace('0.5', '1')
+            }));
+
+        propertiesRadarChart = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: radarLabels,
+                datasets: initialDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        pointLabels: { font: { size: 11 } },
+                         grid: { color: 'rgba(0,0,0,0.05)'},
+                         ticks: {
+                            stepSize: 1,
+                            backdropColor: 'rgba(255,255,255,0.75)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const barCtx = document.getElementById('marketShareBarChart').getContext('2d');
+        const supplierCounts = manufacturerData.flatMap(m => m.type.split(', ')).reduce((acc, type) => {
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+        }, {});
+        
+        marketShareBarChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(supplierCounts),
+                datasets: [{
+                    label: '供应商数量',
+                    data: Object.values(supplierCounts),
+                    backgroundColor: [
+                        'rgba(251, 191, 36, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(217, 119, 6, 0.6)',
+                        'rgba(180, 83, 9, 0.6)',
+                        'rgba(124, 45, 18, 0.6)'
+                    ],
+                    borderColor: [
+                       'rgba(251, 191, 36, 1)',
+                       'rgba(245, 158, 11, 1)',
+                       'rgba(217, 119, 6, 1)',
+                       'rgba(180, 83, 9, 1)',
+                       'rgba(124, 45, 18, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    
+    function updateRadarChart() {
+        const selectedMaterials = Array.from(document.querySelectorAll('#radar-chart-controls input:checked')).map(cb => cb.value);
+        
+        propertiesRadarChart.data.datasets = selectedMaterials.map(material => ({
+            label: material,
+            data: radarChartDataMapping[material].score,
+            backgroundColor: radarChartDataMapping[material].color,
+            borderColor: radarChartDataMapping[material].color.replace('0.5', '1'),
+            borderWidth: 1,
+            pointBackgroundColor: radarChartDataMapping[material].color.replace('0.5', '1')
+        }));
+        
+        propertiesRadarChart.update();
+    }
+
+
+    tabMaterial.addEventListener('click', () => switchView('material'));
+    tabManufacturer.addEventListener('click', () => switchView('manufacturer'));
+    materialTypeFilter.addEventListener('change', applyFilters);
+    manufacturerFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+
+    populateFilters();
+    switchView('material');
+    initCharts();
+});
+</script>
+</body>
+</html>

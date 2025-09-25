@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电解液技术情报交互数据库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Cool Neutrals -->
+    <!-- Application Structure Plan: 一个采用顶部标签导航的单页应用（SPA），包含两个核心功能区：“电解液特性数据库”和“厂商应用调研”。每个区域上方都有一个总结性图表，下方是功能完备的交互式数据表，支持多维度筛选、关键词搜索和排序。这种设计能清晰地分离两种不同的调研任务（材料本身 vs. 市场应用），同时通过统一的交互逻辑（筛选->查看）和无刷新切换，为领域专家提供一个高效、连贯的数据探索体验，旨在快速定位信息并进行横向对比。 -->
+    <!-- Visualization & Content Choices: 报告信息：电解液的开发状态（量产、预研等）。目标：快速了解各类技术的成熟度。可视化方式：饼图。交互：鼠标悬浮提示详情。理由：直观展示不同类别数据的占比。库：Chart.js/Canvas。报告信息：各厂商的电解液应用案例数量。目标：识别市场上的关键参与者和活跃厂商。可视化方式：条形图。交互：鼠标悬浮提示详情。理由：清晰对比不同厂商的案例数量。库：Chart.js/Canvas。报告信息：详细的电解液特性和厂商应用数据。目标：支持深度、精确的信息检索和对比分析。呈现方式：可交互的HTML表格。交互：多选过滤、文本搜索、列排序。理由：为专家用户提供最高的信息密度和数据筛选自由度。实现方法：原生JavaScript进行DOM操作。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            background-color: #f8fafc; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .tab-button {
+            transition: all 0.3s ease-in-out;
+        }
+        .tab-button.active {
+            border-color: #2563eb;
+            color: #2563eb;
+            background-color: #dbeafe;
+        }
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            white-space: nowrap;
+        }
+        th, td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            text-align: left;
+        }
+        thead th {
+            background-color: #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-6">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">电解液技术情报交互数据库</h1>
+            <p class="text-slate-600 mt-2">一个用于分析电解液特性与市场应用的集成平台</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
+            <div class="border-b border-slate-200">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    <button id="tab1-btn" class="tab-button active whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm">
+                        电解液特性数据库
+                    </button>
+                    <button id="tab2-btn" class="tab-button text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm">
+                        厂商应用调研
+                    </button>
+                </nav>
+            </div>
+            
+            <div id="tab1-content" class="tab-content py-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="lg:col-span-2 bg-slate-50 p-6 rounded-lg">
+                        <h2 class="text-xl font-semibold mb-2 text-slate-800">数据库说明</h2>
+                        <p class="text-slate-600">本数据库汇集了多种前沿及主流电解液的详细技术参数。您可以利用下方的筛选和搜索工具，快速定位特定类型的电解液，并深入了解其在电芯中的应用信息、性能表现、材料组分及当前研发进展。这有助于研发人员进行技术选型、性能对标和创新方向探索。</p>
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-slate-700">筛选与搜索：</h3>
+                             <div class="flex flex-wrap gap-4 mt-2">
+                                <div class="w-full sm:w-auto">
+                                    <label for="filter-type-1" class="text-sm font-medium text-slate-700">材料类型:</label>
+                                    <select id="filter-type-1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        <option value="all">所有类型</option>
+                                    </select>
+                                </div>
+                                <div class="w-full sm:w-auto">
+                                    <label for="filter-status-1" class="text-sm font-medium text-slate-700">材料进展:</label>
+                                    <select id="filter-status-1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        <option value="all">所有进展</option>
+                                        <option value="量产">量产</option>
+                                        <option value="预研">预研</option>
+                                        <option value="中试">中试</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow w-full sm:w-auto">
+                                    <label for="search-1" class="text-sm font-medium text-slate-700">关键词搜索:</label>
+                                    <input type="text" id="search-1" placeholder="搜索表格内容..." class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg flex flex-col items-center justify-center">
+                        <h3 class="text-lg font-semibold mb-2 text-center">技术成熟度分布</h3>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th scope="col">材料类型</th>
+                                <th scope="col">电芯上应用信息</th>
+                                <th scope="col">信息来源方向</th>
+                                <th scope="col">电芯性能</th>
+                                <th scope="col">目前材料进展</th>
+                                <th scope="col">材料物化性能</th>
+                                <th scope="col">材料组分</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table1-body" class="divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab2-content" class="tab-content hidden py-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="lg:col-span-2 bg-slate-50 p-6 rounded-lg">
+                         <h2 class="text-xl font-semibold mb-2 text-slate-800">数据库说明</h2>
+                        <p class="text-slate-600">本部分聚焦于主流材料与电池厂商在电解液技术上的应用布局。通过查询特定厂商，您可以了解到其主要应用的电解液类型、相应的电芯性能、出货情况以及最终的应用领域。这为市场分析、供应链研究和竞争格局判断提供了关键情报支持。</p>
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-slate-700">筛选与搜索：</h3>
+                            <div class="flex flex-wrap gap-4 mt-2">
+                                <div class="w-full sm:w-auto">
+                                    <label for="filter-manufacturer-2" class="text-sm font-medium text-slate-700">材料厂商:</label>
+                                    <select id="filter-manufacturer-2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        <option value="all">所有厂商</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow w-full sm:w-auto">
+                                    <label for="search-2" class="text-sm font-medium text-slate-700">关键词搜索:</label>
+                                    <input type="text" id="search-2" placeholder="搜索表格内容..." class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg flex flex-col items-center justify-center">
+                        <h3 class="text-lg font-semibold mb-2 text-center">各厂商技术应用案例数</h3>
+                         <div class="chart-container" style="max-width: 100%; height: 320px;">
+                            <canvas id="manufacturerChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th scope="col">材料厂商</th>
+                                <th scope="col">材料体系</th>
+                                <th scope="col">电解液类型</th>
+                                <th scope="col">电芯性能</th>
+                                <th scope="col">材料应用出货情况</th>
+                                <th scope="col">电芯厂使用情况</th>
+                                <th scope="col">应用电芯规格</th>
+                                <th scope="col">电芯应用领域</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table2-body" class="divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const electrolytesData = [
+        { type: '高功率电解液', appInfo: 'HEV启停电源、无人机、电动工具', source: '材料厂, 文章', performance: '脉冲放电>20C, -30℃仍有>70%功率', status: '量产', physicochemical: '高电导率(>12mS/cm), LiPF6/LiBF4复合盐', composition: '锂盐:LiPF6,LiBF4; 溶剂:EC,DEC,EMC; 添加剂:VC,DTD' },
+        { type: '快充电解液', appInfo: '快充型乘用车(EV), 电动大巴', source: '材料厂(新宙邦, 天赐), 专利', performance: '4-6C充电能力, 10min充80%SOC, 循环>1500周', status: '量产', physicochemical: '高电导率, 快速脱溶剂化膜, LiFSI协同', composition: '锂盐:LiPF6,LiFSI; 溶剂:EC,EMC,Ester; 添加剂:VC,FEC,LiDFOB' },
+        { type: '耐高电压电解液', appInfo: '高能量密度消费电子, 高压三元动力电池', source: '文章, 专利, 材料厂', performance: '工作电压4.45V-4.6V, 高温存储性能优异', status: '量产', physicochemical: '宽电化学窗口(>4.8V), 优异的抗氧化性', composition: '锂盐:LiPF6,LiFSI; 溶剂:FEC,HFE(氟代溶剂); 添加剂:PS,LiDFOB,TTSPi' },
+        { type: '高安全电解液', appInfo: '对安全性要求极高的储能、动力领域', source: '材料厂, 文章', performance: '过充、针刺、热箱测试安全性显著提升', status: '中试', physicochemical: '高闪点, 阻燃性, 电导率略有牺牲', composition: '锂盐:LiPF6; 溶剂:PC,GBL+阻燃剂(磷酸酯类)', compositionDetails: '锂盐:LiPF6; 溶剂:PC,GBL,TPFP; 添加剂:阻燃添加剂(TPP,TEP)' },
+        { type: '耐高温电解液', appInfo: '高温环境工作设备(如沙漠基站), 慢充储能', source: '专利, 材料厂', performance: '60-85℃循环>1000周, 存储性能好', status: '量产', physicochemical: '高温下副反应少, SEI/CEI膜稳定性好', composition: '锂盐:LiTFSI,LiFSI; 溶剂:砜类,离子液体; 添加剂:高温成膜剂(PS,DTD)' },
+        { type: '耐低温电解液', appInfo: '寒冷地区电动汽车, 航空航天', source: '材料厂, 文章', performance: '-40℃放电容量>70%, -20℃充电', status: '量产', physicochemical: '低粘度, 低熔点, 低温下高电导率', composition: '锂盐:LiPF6,LiFSI; 溶剂:EC,PC,Ester(甲酸乙酯等); 添加剂:低温改善剂' },
+        { type: '高浓电解液', appInfo: '高能量密度锂金属电池, 特种电池', source: '文章, 专利', performance: '抑制锂枝晶, 提高库伦效率, 循环稳定性好', status: '预研', physicochemical: 'Li+迁移数高(~0.7), 无自由溶剂分子', composition: '锂盐:LiFSI,LiTFSI; 溶剂:DME,DOL (低介电常数溶剂)' },
+        { type: '局部高浓电解液', appInfo: '快充高能量密度电池, 锂金属电池', source: '文章(王春生), 专利', performance: '兼具高浓和稀溶液优点, 性能均衡', status: '预研', physicochemical: '形成局部高浓溶剂化结构, 稀释剂不参与溶剂化', composition: '锂盐:LiFSI; 溶剂:DME; 稀释剂:TTE(氟代醚)' },
+        { type: '全氟电解液', appInfo: '超高电压(>5V)正极材料体系', source: '文章, 专利', performance: '支持5V以上循环, 极端耐氧化', status: '预研', physicochemical: '极宽电化学窗口(>6V), 但离子电导率较低', composition: '锂盐:LiFSI,LiPF6; 溶剂:全氟溶剂(FEC,HFE); 添加剂:少量成膜剂' },
+        { type: '离子液体电解液', appInfo: '高温、高安全要求的特种储能', source: '文章', performance: '不可燃, 极低挥发性, >100℃稳定工作', status: '预研', physicochemical: '电导率较低, 粘度大, 成本高', composition: '锂盐:LiTFSI; 溶剂:Imidazolium, Pyrrolidinium基离子液体' },
+        { type: '凝胶电解质', appInfo: '柔性/可穿戴设备, 固态电池过渡', source: '文章, 专利', performance: '无流动性, 封装简易, 安全性好', status: '中试', physicochemical: '电导率介于液态和固态之间(1-5mS/cm)', composition: '基体:PVDF-HFP,PEO; 电解液:常规液态电解液' },
+        { type: '三元电解液', appInfo: 'NCM523, 622, 811动力/消费电池', source: '材料厂', performance: '匹配不同电压平台, 兼顾循环和倍率', status: '量产', physicochemical: '标准电导率, 良好界面成膜特性', composition: '锂盐:LiPF6; 溶剂:EC,EMC,DEC; 添加剂:VC,DTD,PS' },
+        { type: '铁锂电解液', appInfo: 'LFP储能, 动力电池', source: '材料厂', performance: '长循环寿命(>5000周), 低成本, 安全性高', status: '量产', physicochemical: '对水分和HF不敏感, 要求成本控制', composition: '锂盐:LiPF6; 溶剂:EC,PC,EMC; 添加剂:VC,LiBOB' },
+        { type: '高镍电解液', appInfo: 'NCA, NCM811/9系动力电池', source: '材料厂, 专利', performance: '抑制高镍正极产气和结构破坏', status: '量产', physicochemical: '优秀的CEI成膜能力, 抗氧化性', composition: '锂盐:LiPF6,LiFSI; 溶剂:EC,EMC; 添加剂:PS,LiPO2F2,DTD' },
+        { type: '高硅电解液', appInfo: '硅碳/硅氧负极电池(>10% Si)', source: '材料厂, 专利', performance: '适应硅负极巨大体积膨胀, 提高首效和循环', status: '量产', physicochemical: '形成坚固且有弹性的SEI膜', composition: '锂盐:LiPF6; 溶剂:EC,EMC; 添加剂:FEC,VEC,LiDFOB' },
+        { type: '富锂正极电解液', appInfo: '富锂锰基正极(LMR)', source: '文章, 专利', performance: '稳定4.6V以上高电压, 抑制锰溶解', status: '预研', physicochemical: '高电压抗氧化, 稳定正极界面', composition: '锂盐:LiFSI; 溶剂:砜类,氟代溶剂; 添加剂:LiPO2F2' },
+        { type: '锂金属电解液', appInfo: '锂金属负极电池', source: '文章, 专利', performance: '高库伦效率(>99.5%), 抑制枝晶生长', status: '预研', physicochemical: '形成均匀稳定的SEI膜, Li+迁移数高', composition: '锂盐:LiFSI; 溶剂:DME/DOL(醚类),或局部高浓体系' },
+        { type: '醚类电解液', appInfo: '锂硫电池, 锂金属电池', source: '文章', performance: '对锂金属稳定, 溶解多硫化物', status: '预研', physicochemical: '电化学窗口窄(<4V), 对正极不稳定', composition: '锂盐:LiTFSI; 溶剂:DME,DOL; 添加剂:LiNO3' },
+        { type: '羧酸酯类电解液', appInfo: '耐低温电池', source: '文章, 专利', performance: '优异的低温性能(-40~-50℃)', status: '中试', physicochemical: '极低熔点和粘度, 但窗口较窄', composition: '锂盐:LiPF6; 溶剂:EC,PC,Ester(甲酸乙酯,丙酸甲酯)' },
+        { type: '360Wh/kg电解液', appInfo: '超高能量密度液态电池', source: '电芯厂(CATL麒麟电池)', performance: '匹配高镍正极和硅碳负极体系', status: '量产', physicochemical: '高电压, 稳定硅负极界面, 动力学快', composition: '高镍电解液+高硅电解液复合技术' },
+        { type: '400Wh/kg电解液', appInfo: '半固态/下一代液态电池', source: '电芯厂(卫蓝/国轩)', performance: '匹配高镍/富锂正极+硅基/锂金属负极', status: '中试', physicochemical: '极端耐高压, 稳定活性电极界面', composition: '局部高浓或类固态电解质技术' },
+        { type: '5C电解液', appInfo: '5C快充麒麟/神行电池', source: '电芯厂(CATL)', performance: '10分钟充电80%, 兼顾高能量密度', status: '量产', physicochemical: '极低界面阻抗, 快速离子传输通道', composition: '快充电解液升级版, 新型锂盐和溶剂' },
+        { type: '8C电解液', appInfo: '超快充动力电池', source: '电芯厂(亿纬/欣旺达)', performance: '7.5分钟充电80%, 温升可控', status: '中试', physicochemical: '极致的离子动力学性能', composition: '多功能添加剂协同, 新型导电盐' },
+        { type: '10C电解液', appInfo: '概念性/竞赛级超跑电池', source: '专利, 预研机构', performance: '6分钟充电80%, 循环寿命牺牲较大', status: '预研', physicochemical: '离子传输机理突破, 界面热管理', composition: '超浓电解液或新型溶剂体系' },
+    ];
+
+    const manufacturersData = [
+        { manufacturer: 'CATL(宁德时代)', materialSystem: '高镍三元/人造石墨', electrolyteType: '快充电解液, 耐高电压, 高硅', performance: '360Wh/kg, 5C快充, 2000次循环', shippingStatus: '大规模量产', cellClients: '自用, Tesla, BMW', cellFormat: '方形, CTP/麒麟', cellApplication: '高端BEV' },
+        { manufacturer: '比亚迪', materialSystem: 'LFP/人造石墨', electrolyteType: '铁锂电解液, 耐高温', performance: '>6000次循环, 针刺安全, 高体积能量密度', shippingStatus: '大规模量产', cellClients: '自用, Tesla, 丰田', cellFormat: '方形(刀片电池)', cellApplication: 'BEV, PHEV, 储能' },
+        { manufacturer: '亿纬', materialSystem: '高镍/硅碳', electrolyteType: '高镍电解液, 高硅, 8C快充', performance: '大圆柱电池, 9分钟快充', shippingStatus: '小批量出货', cellClients: '宝马等', cellFormat: '圆柱(46系)', cellApplication: '高端BEV' },
+        { manufacturer: 'CALB(中创新航)', materialSystem: '高电压三元/LFP', electrolyteType: '耐高电压, 铁锂', performance: '高能量密度, 长循环, One-Stop电池', shippingStatus: '大规模量产', cellClients: '广汽, 小鹏', cellFormat: '方形, 软包', cellApplication: 'BEV' },
+        { manufacturer: '国轩高科', materialSystem: 'LFP/半固态', electrolyteType: '铁锂, 400Wh/kg(半固态)', performance: 'LFP能量密度>210Wh/kg, 半固态电池', shippingStatus: '量产/中试', cellClients: '大众, 奇瑞', cellFormat: '方形, 软包', cellApplication: 'BEV, 储能' },
+        { manufacturer: 'LG新能源', materialSystem: '高镍/硅碳', electrolyteType: '高镍, 高硅', performance: '超高镍NCMA, 高能量密度', shippingStatus: '大规模量产', cellClients: 'Tesla, GM, 现代', cellFormat: '圆柱, 软包', cellApplication: '高端BEV' },
+        { manufacturer: '松下', materialSystem: '高镍NCA/硅', electrolyteType: '高镍, 高硅(圆柱专用)', performance: '圆柱电池能量密度领先', shippingStatus: '大规模量产', cellClients: 'Tesla, 丰田', cellFormat: '圆柱(2170, 4680)', cellApplication: '高端BEV' },
+        { manufacturer: '三星SDI', materialSystem: '高镍NCA/石墨', electrolyteType: '高镍(方形专用)', performance: '第五代方形电池, 高能量密度', shippingStatus: '大规模量产', cellClients: 'BMW, Stellantis', cellFormat: '方形', cellApplication: '高端BEV, PHEV' },
+        { manufacturer: '蜂巢能源', materialSystem: '无钴/LFP', electrolyteType: '耐高电压, 铁锂(短刀)', performance: '无钴电池, 果冻电池(高安全)', shippingStatus: '大规模量产', cellClients: '长城', cellFormat: '方形(短刀)', cellApplication: 'BEV' },
+        { manufacturer: '欣旺达', materialSystem: '三元/LFP', electrolyteType: '快充(8C), 高功率', performance: '闪充电池, 高功率HEV电池', shippingStatus: '量产', cellClients: '吉利, 东风', cellFormat: '方形', cellApplication: 'BEV, HEV' },
+        { manufacturer: '天赐材料', materialSystem: '电解液供应商', electrolyteType: '全系列, LiFSI领先', performance: '核心溶剂、锂盐、添加剂自产', shippingStatus: '全球龙头', cellClients: 'CATL, LG, Tesla', cellFormat: 'N/A', cellApplication: 'N/A' },
+        { manufacturer: '新宙邦', materialSystem: '电解液供应商', electrolyteType: '全系列, 氟化学领先', performance: '新型添加剂和溶剂技术领先', shippingStatus: '全球前二', cellClients: '松下, 三星SDI', cellFormat: 'N/A', cellApplication: 'N/A' },
+        { manufacturer: '国泰华荣', materialSystem: '电解液供应商', electrolyteType: '常规液态电解液', performance: '产能规模大, 成本控制好', shippingStatus: '大规模量产', cellClients: '国内主流电池厂', cellFormat: 'N/A', cellApplication: 'N/A' },
+        { manufacturer: '多氟多', materialSystem: '锂盐供应商', electrolyteType: 'LiPF6, LiFSI', performance: 'LiPF6龙头, 新型锂盐LiFSI放量', shippingStatus: '大规模量产', cellClients: '比亚迪, 天赐', cellFormat: 'N/A', cellApplication: 'N/A' },
+        { manufacturer: 'AESC(远景动力)', materialSystem: '高镍/石墨', electrolyteType: '高镍', performance: '软包电池, 安全性记录良好', shippingStatus: '大规模量产', cellClients: '日产, 奔驰', cellFormat: '软包', cellApplication: 'BEV' },
+        { manufacturer: '力神', materialSystem: 'LFP/三元', electrolyteType: '铁锂, 高功率', performance: '消费类和动力类圆柱电池', shippingStatus: '量产', cellClients: '国内车企', cellFormat: '圆柱, 方形', cellApplication: 'BEV, 消费电子' },
+        { manufacturer: '瑞浦兰钧', materialSystem: 'LFP/高镍', electrolyteType: '铁锂(储能), 高镍(动力)', performance: '储能电池出货量大', shippingStatus: '大规模量产', cellClients: '储能集成商, 车企', cellFormat: '方形', cellApplication: '储能, BEV' },
+        { manufacturer: '比克', materialSystem: '高镍三元', electrolyteType: '高功率, 高镍(圆柱)', performance: '小动力圆柱电池', shippingStatus: '量产', cellClients: '两轮车, 工具', cellFormat: '圆柱', cellApplication: '电动工具, 两轮车' },
+    ];
+    
+    let statusChart, manufacturerChart;
+
+    const tab1Btn = document.getElementById('tab1-btn');
+    const tab2Btn = document.getElementById('tab2-btn');
+    const tab1Content = document.getElementById('tab1-content');
+    const tab2Content = document.getElementById('tab2-content');
+
+    const filterType1 = document.getElementById('filter-type-1');
+    const filterStatus1 = document.getElementById('filter-status-1');
+    const search1 = document.getElementById('search-1');
+    const table1Body = document.getElementById('table1-body');
+
+    const filterManufacturer2 = document.getElementById('filter-manufacturer-2');
+    const search2 = document.getElementById('search-2');
+    const table2Body = document.getElementById('table2-body');
+
+    function switchTab(tab) {
+        if (tab === 'tab1') {
+            tab1Btn.classList.add('active');
+            tab2Btn.classList.remove('active');
+            tab1Content.classList.remove('hidden');
+            tab2Content.classList.add('hidden');
+        } else {
+            tab1Btn.classList.remove('active');
+            tab2Btn.classList.add('active');
+            tab1Content.classList.add('hidden');
+            tab2Content.classList.remove('hidden');
+        }
+    }
+
+    tab1Btn.addEventListener('click', () => switchTab('tab1'));
+    tab2Btn.addEventListener('click', () => switchTab('tab2'));
+
+    function populateFilters() {
+        const types = [...new Set(electrolytesData.map(item => item.type))];
+        types.sort().forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            filterType1.appendChild(option);
+        });
+
+        const manufacturers = [...new Set(manufacturersData.map(item => item.manufacturer))];
+        manufacturers.sort().forEach(manufacturer => {
+            const option = document.createElement('option');
+            option.value = manufacturer;
+            option.textContent = manufacturer;
+            filterManufacturer2.appendChild(option);
+        });
+    }
+
+    function renderTable1() {
+        const typeFilter = filterType1.value;
+        const statusFilter = filterStatus1.value;
+        const searchTerm = search1.value.toLowerCase();
+
+        const filteredData = electrolytesData.filter(item => {
+            const matchesType = typeFilter === 'all' || item.type === typeFilter;
+            const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+            const matchesSearch = searchTerm === '' || Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+            return matchesType && matchesStatus && matchesSearch;
+        });
+
+        table1Body.innerHTML = '';
+        if (filteredData.length === 0) {
+            table1Body.innerHTML = `<tr><td colspan="7" class="text-center text-slate-500 py-4">未找到匹配项</td></tr>`;
+            return;
+        }
+        filteredData.forEach(item => {
+            const row = `<tr>
+                <td class="font-medium text-blue-600">${item.type}</td>
+                <td>${item.appInfo}</td>
+                <td>${item.source}</td>
+                <td>${item.performance}</td>
+                <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === '量产' ? 'bg-green-100 text-green-800' : (item.status === '中试' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800')}">${item.status}</span></td>
+                <td>${item.physicochemical}</td>
+                <td>${item.composition}</td>
+            </tr>`;
+            table1Body.innerHTML += row;
+        });
+    }
+
+    function renderTable2() {
+        const manufacturerFilter = filterManufacturer2.value;
+        const searchTerm = search2.value.toLowerCase();
+
+        const filteredData = manufacturersData.filter(item => {
+            const matchesManufacturer = manufacturerFilter === 'all' || item.manufacturer === manufacturerFilter;
+            const matchesSearch = searchTerm === '' || Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+            return matchesManufacturer && matchesSearch;
+        });
+        
+        table2Body.innerHTML = '';
+        if (filteredData.length === 0) {
+            table2Body.innerHTML = `<tr><td colspan="8" class="text-center text-slate-500 py-4">未找到匹配项</td></tr>`;
+            return;
+        }
+        filteredData.forEach(item => {
+            const row = `<tr>
+                <td class="font-medium text-blue-600">${item.manufacturer}</td>
+                <td>${item.materialSystem}</td>
+                <td>${item.electrolyteType}</td>
+                <td>${item.performance}</td>
+                <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.shippingStatus.includes('量产') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">${item.shippingStatus}</span></td>
+                <td>${item.cellClients}</td>
+                <td>${item.cellFormat}</td>
+                <td>${item.cellApplication}</td>
+            </tr>`;
+            table2Body.innerHTML += row;
+        });
+    }
+    
+    function createOrUpdateCharts() {
+        const statusCounts = electrolytesData.reduce((acc, item) => {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(statusCounts),
+                datasets: [{
+                    label: '技术成熟度',
+                    data: Object.values(statusCounts),
+                    backgroundColor: ['#10b981', '#a855f7', '#f59e0b', '#3b82f6'],
+                    borderColor: '#f8fafc',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        
+        const manufacturerCounts = manufacturersData.reduce((acc, item) => {
+            acc[item.manufacturer] = (acc[item.manufacturer] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const sortedManufacturers = Object.entries(manufacturerCounts).sort(([,a],[,b]) => b-a);
+
+        const manufacturerCtx = document.getElementById('manufacturerChart').getContext('2d');
+        if (manufacturerChart) manufacturerChart.destroy();
+        manufacturerChart = new Chart(manufacturerCtx, {
+            type: 'bar',
+            data: {
+                labels: sortedManufacturers.map(item => item[0]),
+                datasets: [{
+                    label: '技术应用案例数',
+                    data: sortedManufacturers.map(item => item[1]),
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#2563eb',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    filterType1.addEventListener('change', renderTable1);
+    filterStatus1.addEventListener('change', renderTable1);
+    search1.addEventListener('input', renderTable1);
+    filterManufacturer2.addEventListener('change', renderTable2);
+    search2.addEventListener('input', renderTable2);
+
+    populateFilters();
+    renderTable1();
+    renderTable2();
+    createOrUpdateCharts();
+});
+</script>
+
+</body>
+</html>

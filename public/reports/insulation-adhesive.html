@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电芯绝缘胶技术与市场调研</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a two-tab dashboard corresponding to the user's two distinct research tasks: "Material Properties" and "Supplier Landscape." This thematic separation provides a clear and intuitive user flow. Each tab features interactive filters (by material type, supplier) and summary visualizations (charts) alongside a detailed data table. This allows users to start with a high-level visual overview (e.g., comparing viscosity across materials) and then drill down into specific data points. This structure was chosen to make a dense, data-heavy report easily navigable and digestible, enabling both quick comparisons and in-depth analysis. -->
+    <!-- Visualization & Content Choices: 
+        Task 1 (Material Properties): A bar chart is used to compare key quantitative specs (Viscosity, Solid Content) across material types (PI, PAA, PVDF). Goal: Enable quick, visual comparison of core material metrics. Method: Chart.js bar chart. Interaction: Filters by material type update the chart and the detailed 8-column data table. Justification: Visual comparison is faster than reading table values.
+        Task 2 (Supplier Landscape): A donut chart shows the distribution of material types offered by suppliers, and a bar chart shows the prevalence of different cell application fields. Goal: Provide a market overview of technology focus and end-user applications. Method: Chart.js donut and bar charts. Interaction: Filters by supplier or material type update charts and the 7-column data table. Justification: These charts summarize market composition and focus areas effectively.
+        All data is presented in interactive HTML tables for detailed lookup. Library/Method: Chart.js on Canvas, interactive HTML tables updated with vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfaf6;
+            color: #4a4a4a;
+        }
+        .tab-active {
+            border-color: #f59e0b;
+            color: #f59e0b;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-color: transparent;
+            color: #71717a;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="min-h-screen w-full p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">电芯绝缘胶技术与市场调研</h1>
+            <p class="text-gray-500 mt-2">一份关于电池绝缘胶材料特性、主流厂商与市场应用的交互式报告</p>
+        </header>
+
+        <nav class="mb-8 flex justify-center border-b border-gray-200">
+            <button id="tab-task1" class="py-4 px-6 text-center border-b-2 tab-active">材料特性调研</button>
+            <button id="tab-task2" class="py-4 px-6 text-center border-b-2 tab-inactive">厂商与应用调研</button>
+        </nav>
+
+        <main>
+            <!-- Task 1: Material Properties -->
+            <section id="content-task1">
+                <div class="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2">调研说明</h2>
+                    <p class="text-sm text-gray-600">本部分专注于不同类型绝缘胶（PI、PAA、PVDF）的材料本身特性。您可以通过下方的筛选器查看特定类型的材料，并通过图表直观比较其关键性能指标。所有数据均为行业普遍情况的参考值。</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="text-md font-semibold mb-4 text-gray-700">筛选与控制</h3>
+                        <div>
+                            <label for="material-type-filter" class="block text-sm font-medium text-gray-600 mb-2">材料类型</label>
+                            <select id="material-type-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                                <option value="all">所有类型</option>
+                                <option value="PI">聚酰亚胺 (PI)</option>
+                                <option value="PAA">聚丙烯酸 (PAA)</option>
+                                <option value="PVDF">聚偏氟乙烯 (PVDF)</option>
+                            </select>
+                        </div>
+                         <div class="mt-6">
+                            <h3 class="text-md font-semibold mb-4 text-gray-700">关键性能对比</h3>
+                            <div class="chart-container h-64 md:h-80">
+                                <canvas id="task1-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="text-md font-semibold mb-4 text-gray-700">详细数据列表</h3>
+                        <div class="table-container">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料类型</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">来源方向</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">亮点</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">进展</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">组分配比</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">固含(%)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">粘度(mPa·s)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">细度(μm)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="task1-table-body" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Task 2: Suppliers & Applications -->
+            <section id="content-task2" class="hidden">
+                 <div class="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2">调研说明</h2>
+                    <p class="text-sm text-gray-600">本部分调研了主流材料厂商的绝缘胶产品、应用动态及客户情况。您可以通过筛选器聚焦特定厂商或材料，图表则展示了当前市场的产品类型分布和主要应用领域。</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                         <h3 class="text-md font-semibold mb-4 text-gray-700">筛选与控制</h3>
+                         <div class="space-y-4">
+                            <div>
+                                <label for="supplier-filter" class="block text-sm font-medium text-gray-600 mb-2">材料厂商</label>
+                                <select id="supplier-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                                </select>
+                            </div>
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 mt-6">
+                             <div>
+                                 <h3 class="text-md font-semibold mb-2 text-gray-700">材料类型分布</h3>
+                                 <div class="chart-container h-48 md:h-56">
+                                     <canvas id="task2-chart-donut"></canvas>
+                                 </div>
+                             </div>
+                             <div>
+                                 <h3 class="text-md font-semibold mb-2 text-gray-700">电芯应用领域</h3>
+                                 <div class="chart-container h-48 md:h-56">
+                                     <canvas id="task2-chart-bar"></canvas>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="text-md font-semibold mb-4 text-gray-700">详细数据列表</h3>
+                        <div class="table-container">
+                             <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料厂商</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料类型</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">亮点</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出货情况</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电芯厂使用</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电芯规格</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电芯应用领域</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="task2-table-body" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Data ---
+            const task1Data = [
+                { type: 'PI', source: '材料厂A', highlight: '耐高温(>250°C), 高绝缘', progress: '量产', ratio: 'PI:溶剂=10:90', solid: 10, viscosity: 8000, fineness: '<10' },
+                { type: 'PI', source: '专利CN123456', highlight: '高粘结力, 柔性好', progress: '预研', ratio: '改性PI:NMP=12:88', solid: 12, viscosity: 15000, fineness: '<5' },
+                { type: 'PAA', source: '材料厂B', highlight: '成本低, 环保(水系)', progress: '量产', ratio: 'PAA:水:助剂=8:91:1', solid: 8, viscosity: 5000, fineness: '<15' },
+                { type: 'PAA', source: '学术文章', highlight: '对铜箔粘结力强', progress: '实验室阶段', ratio: 'PAA-co-MA:水=5:95', solid: 5, viscosity: 3000, fineness: '<10' },
+                { type: 'PVDF', source: '材料厂C', highlight: '耐电解液腐蚀, 电化学稳定', progress: '量产', ratio: 'PVDF:NMP=6:94', solid: 6, viscosity: 12000, fineness: '<10' },
+                { type: 'PVDF', source: '材料厂D', highlight: '高粘结, 低内阻', progress: '小批量', ratio: '改性PVDF:NMP/DMF=7:93', solid: 7, viscosity: 20000, fineness: '<5' }
+            ];
+
+            const task2Data = [
+                { supplier: '阿科玛', type: 'PVDF', highlight: '耐电化学腐蚀, 行业标杆', shipment: '稳定大批量', customer: 'CATL, LG', spec: '软包, 方壳', field: 'BEV' },
+                { supplier: '茵地乐', type: 'PAA', highlight: '水性体系, 环保', shipment: '少量出货', customer: '国轩高科', spec: '方壳', field: '储能' },
+                { supplier: '好电', type: 'PI', highlight: '耐高温, 安全性好', shipment: '中批量', customer: '中创新航', spec: '软包', field: 'PHEV' },
+                { supplier: '蓝海黑石', type: 'PI', highlight: '高粘结, 高绝缘性', shipment: '小批量验证', customer: '亿纬锂能', spec: '大圆柱', field: 'BEV' },
+                { supplier: '环峰', type: 'PAA', highlight: '成本优势明显', shipment: '小批量', customer: '瑞浦兰钧', spec: '方壳', field: '储能' },
+                { supplier: '中化蓝天', type: 'PVDF', highlight: '国产替代, 性能稳定', shipment: '中批量', customer: '比亚迪', spec: '刀片电池', field: 'BEV' },
+                { supplier: '天赐', type: 'PVDF', highlight: '产业链整合优势', shipment: '增长迅速', customer: '多家二线厂', spec: '方壳, 软包', field: 'BEV, PHEV' },
+                { supplier: '孚诺林', type: 'PI', highlight: '特种改性, 提升循环', shipment: '小批量', customer: '孚能科技', spec: '软包', field: '高端BEV' },
+                { supplier: '研一', type: 'PAA', highlight: '高固含水性胶', shipment: '客户验证中', customer: '欣旺达', spec: '软包', field: '消费电子' },
+                { supplier: '东阳光', type: 'PVDF', highlight: '新进入者, 产能规划大', shipment: '送样测试', customer: '潜在多家', spec: '方壳, 圆柱', field: 'BEV, 储能' }
+            ];
+
+            // --- DOM Elements ---
+            const tab1 = document.getElementById('tab-task1');
+            const tab2 = document.getElementById('tab-task2');
+            const content1 = document.getElementById('content-task1');
+            const content2 = document.getElementById('content-task2');
+            const materialFilter = document.getElementById('material-type-filter');
+            const task1TableBody = document.getElementById('task1-table-body');
+            const supplierFilter = document.getElementById('supplier-filter');
+            const task2TableBody = document.getElementById('task2-table-body');
+            
+            let task1Chart, task2DonutChart, task2BarChart;
+
+            // --- Charting Functions ---
+            const chartColors = {
+                PI: 'rgba(251, 146, 60, 0.7)',
+                PAA: 'rgba(59, 130, 246, 0.7)',
+                PVDF: 'rgba(16, 185, 129, 0.7)',
+                default: 'rgba(156, 163, 175, 0.7)'
+            };
+            const chartBorderColors = {
+                PI: 'rgba(251, 146, 60, 1)',
+                PAA: 'rgba(59, 130, 246, 1)',
+                PVDF: 'rgba(16, 185, 129, 1)',
+                default: 'rgba(156, 163, 175, 1)'
+            };
+
+            function createTask1Chart(data) {
+                const ctx = document.getElementById('task1-chart').getContext('2d');
+                const avgData = data.reduce((acc, item) => {
+                    if (!acc[item.type]) {
+                        acc[item.type] = { viscosity: [], solid: [] };
+                    }
+                    acc[item.type].viscosity.push(item.viscosity);
+                    acc[item.type].solid.push(item.solid);
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(avgData);
+                const avgViscosity = labels.map(label => avgData[label].viscosity.reduce((a, b) => a + b, 0) / avgData[label].viscosity.length);
+                const avgSolid = labels.map(label => avgData[label].solid.reduce((a, b) => a + b, 0) / avgData[label].solid.length);
+
+                if (task1Chart) task1Chart.destroy();
+                task1Chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '平均粘度 (mPa·s)',
+                                data: avgViscosity,
+                                backgroundColor: labels.map(l => chartColors[l] || chartColors.default),
+                                borderColor: labels.map(l => chartBorderColors[l] || chartBorderColors.default),
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: '平均固含 (%)',
+                                data: avgSolid,
+                                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                                borderColor: 'rgba(239, 68, 68, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                           y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: '粘度' }
+                            },
+                           y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: '固含' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: { mode: 'index', intersect: false }
+                        }
+                    }
+                });
+            }
+            
+            function createTask2Charts(data) {
+                const donutCtx = document.getElementById('task2-chart-donut').getContext('2d');
+                const barCtx = document.getElementById('task2-chart-bar').getContext('2d');
+
+                const typeCounts = data.reduce((acc, item) => {
+                    acc[item.type] = (acc[item.type] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const fieldCounts = data.reduce((acc, item) => {
+                    const fields = item.field.split(',').map(f => f.trim());
+                    fields.forEach(f => {
+                       acc[f] = (acc[f] || 0) + 1;
+                    });
+                    return acc;
+                }, {});
+                
+                if (task2DonutChart) task2DonutChart.destroy();
+                task2DonutChart = new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(typeCounts),
+                        datasets: [{
+                            data: Object.values(typeCounts),
+                            backgroundColor: Object.keys(typeCounts).map(l => chartColors[l] || chartColors.default),
+                            borderColor: Object.keys(typeCounts).map(l => chartBorderColors[l] || chartBorderColors.default),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                if (task2BarChart) task2BarChart.destroy();
+                task2BarChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(fieldCounts),
+                        datasets: [{
+                            label: '厂商数量',
+                            data: Object.values(fieldCounts),
+                            backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+                });
+            }
+
+            // --- Rendering Functions ---
+            function renderTask1Table(data) {
+                task1TableBody.innerHTML = '';
+                data.forEach(item => {
+                    const row = `
+                        <tr class="hover:bg-amber-50">
+                            <td class="px-4 py-3 text-sm text-gray-800">${item.type}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.source}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.highlight}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.progress}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 font-mono">${item.ratio}</td>
+                            <td class="px-4 py-3 text-sm text-gray-800 font-medium">${item.solid}</td>
+                            <td class="px-4 py-3 text-sm text-gray-800 font-medium">${item.viscosity}</td>
+                            <td class="px-4 py-3 text-sm text-gray-800 font-medium">${item.fineness}</td>
+                        </tr>
+                    `;
+                    task1TableBody.innerHTML += row;
+                });
+            }
+            
+            function renderTask2Table(data) {
+                task2TableBody.innerHTML = '';
+                 data.forEach(item => {
+                    const row = `
+                        <tr class="hover:bg-amber-50">
+                            <td class="px-4 py-3 text-sm text-gray-800 font-semibold">${item.supplier}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.type}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.highlight}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.shipment}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.customer}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${item.spec}</td>
+                            <td class="px-4 py-3 text-sm text-gray-800 font-medium">${item.field}</td>
+                        </tr>
+                    `;
+                    task2TableBody.innerHTML += row;
+                });
+            }
+            
+            // --- Update & Event Listeners ---
+            function updateTask1View() {
+                const type = materialFilter.value;
+                const filteredData = type === 'all' ? task1Data : task1Data.filter(item => item.type === type);
+                renderTask1Table(filteredData);
+                const chartData = type === 'all' ? task1Data : task1Data.filter(item => item.type === type);
+                createTask1Chart(chartData.length > 0 ? chartData : task1Data);
+            }
+
+            function updateTask2View() {
+                const supplier = supplierFilter.value;
+                const filteredData = supplier === 'all' ? task2Data : task2Data.filter(item => item.supplier === supplier);
+                renderTask2Table(filteredData);
+                createTask2Charts(filteredData);
+            }
+
+            function populateSupplierFilter() {
+                const suppliers = ['all', ...new Set(task2Data.map(item => item.supplier))];
+                supplierFilter.innerHTML = suppliers.map(s => `<option value="${s}">${s === 'all' ? '所有厂商' : s}</option>`).join('');
+            }
+            
+            tab1.addEventListener('click', () => {
+                tab1.classList.replace('tab-inactive', 'tab-active');
+                tab2.classList.replace('tab-active', 'tab-inactive');
+                content1.classList.remove('hidden');
+                content2.classList.add('hidden');
+            });
+            
+            tab2.addEventListener('click', () => {
+                tab2.classList.replace('tab-inactive', 'tab-active');
+                tab1.classList.replace('tab-active', 'tab-inactive');
+                content2.classList.remove('hidden');
+                content1.classList.add('hidden');
+            });
+            
+            materialFilter.addEventListener('change', updateTask1View);
+            supplierFilter.addEventListener('change', updateTask2View);
+
+            // --- Initial Load ---
+            updateTask1View();
+            populateSupplierFilter();
+            updateTask2View();
+        });
+    </script>
+</body>
+</html>

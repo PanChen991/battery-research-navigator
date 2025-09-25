@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电池隔膜技术与市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals with Subtle Accents -->
+    <!-- Application Structure Plan: A two-tab SPA. Tab 1 ("Material Properties") now uses a comprehensive table for direct comparison of all material types, supported by a summary chart. Tab 2 ("Manufacturer Survey") retains its searchable, sortable table for detailed manufacturer comparison. This structure maintains a clear separation of "what" vs. "who" while offering different data exploration methods suited to each dataset. -->
+    <!-- Visualization & Content Choices: Report Info (Material Properties) -> Goal (Inform/Compare) -> Viz (Full Table, Bar Chart) -> Interaction (Static view for overview) -> Justification (A direct table view is better for at-a-glance comparison across all material attributes) -> Library (JS/HTML, Chart.js). Report Info (Manufacturer Details) -> Goal (Organize/Compare) -> Viz (Interactive Table) -> Interaction (Search, Sort) -> Justification (Handles dense, multi-attribute data effectively for comparison) -> Library (JS/HTML). CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .tab-active {
+            border-bottom: 2px solid #0d9488;
+            color: #0d9488;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div id="app" class="max-w-7xl mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800">电池隔膜技术与市场洞察</h1>
+            <p class="text-stone-500 mt-2">交互式调研报告</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-stone-200 mb-8">
+            <button id="tab1-btn" class="px-6 py-3 text-lg font-medium text-stone-600 focus:outline-none tab-active">材料特性概览</button>
+            <button id="tab2-btn" class="px-6 py-3 text-lg font-medium text-stone-600 focus:outline-none">厂商应用调研</button>
+        </nav>
+
+        <main>
+            <!-- View 1: Material Properties -->
+            <div id="view1">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-stone-700">隔膜材料特性分析</h2>
+                    <p class="text-stone-500 mt-1">下表汇总了不同隔膜材料的核心特性、应用和发展现状。</p>
+                </div>
+
+                <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-stone-200">
+                            <thead class="bg-stone-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料类型</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">应用方向</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料信息来源方向</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料本身亮点</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">目前材料进展</th>
+                                </tr>
+                            </thead>
+                            <tbody id="material-properties-table" class="bg-white divide-y divide-stone-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                 <div class="mt-12 bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold text-center text-stone-700 mb-4">技术成熟度概览</h3>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Manufacturer Survey -->
+            <div id="view2" class="hidden">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-stone-700">主流隔膜厂商调研</h2>
+                    <p class="text-stone-500 mt-1">下方表格汇总了主流厂商的产品布局、技术亮点及应用情况。您可以使用搜索框进行筛选。</p>
+                </div>
+                <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+                    <div class="mb-4">
+                        <input type="text" id="searchInput" placeholder="按厂商、材料类型、亮点或电芯厂搜索..." class="w-full p-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-stone-200">
+                            <thead class="bg-stone-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料厂商</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料类型</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料信息</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">材料亮点</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">出货情况</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">电芯厂</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">电芯规格</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">应用领域</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manufacturer-table" class="bg-white divide-y divide-stone-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-12 text-stone-400 text-sm">
+            <p>&copy; 2025 电池技术调研部. All rights reserved.</p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const materialsData = [
+        { 
+            type: 'PE基膜', 
+            application: '主流动力电池（如NCM/NCA）、消费类电池', 
+            source: '主流隔膜材料厂（恩捷、星源、SK等）', 
+            highlights: '成本低、电化学稳定性好、机械性能均衡、孔径分布均匀', 
+            progress: '量产' 
+        },
+        { 
+            type: 'PP基膜', 
+            application: '部分磷酸铁锂电池、储能电池、低温电池', 
+            source: 'Celgard、中兴新材等', 
+            highlights: '耐热性优于PE（熔点约165℃）、耐穿刺性好', 
+            progress: '量产' 
+        },
+        { 
+            type: 'PI基膜', 
+            application: '高温特种电池、部分高端动力电池预研', 
+            source: '杜邦、达迈、相关专利及研究论文', 
+            highlights: '极高的耐热性（>300℃）、优异的机械强度和尺寸稳定性', 
+            progress: '预研' 
+        },
+        { 
+            type: '聚酯(PET)基膜', 
+            application: '日韩系部分电池厂商尝试、特种电容器', 
+            source: '东丽、三菱化学', 
+            highlights: '高强度、高浸润性、成本相对较低', 
+            progress: '小批量应用' 
+        },
+        { 
+            type: '芳纶(Aramid)基膜', 
+            application: '高端动力电池、高倍率电池、航空航天', 
+            source: '帝人（Teijin）、泰和新材、相关专利', 
+            highlights: '优异的耐高温性（>400℃不收缩）、阻燃、高强度、长循环寿命', 
+            progress: '预研' 
+        },
+        { 
+            type: '无纺布基膜', 
+            application: '高温锂离子电池（如钛酸锂）、超级电容器、部分固态电池', 
+            source: '旭化成、三菱', 
+            highlights: '孔隙率极高、吸液/保液能力强、柔性好', 
+            progress: '小批量应用' 
+        },
+        { 
+            type: '陶瓷涂层', 
+            application: '几乎所有主流动力电池', 
+            source: '主流隔膜厂（恩捷、星源）、涂覆材料厂（璞泰来、卓高）', 
+            highlights: '显著提升耐热性（防止热失控时隔膜收缩）、提高抗穿刺能力、改善浸润性', 
+            progress: '量产' 
+        },
+        { 
+            type: '有机(PVDF/PMMA)涂层', 
+            application: '软包电池、高能量密度电池', 
+            source: '主流隔膜厂', 
+            highlights: '与电解液相容性好、高粘结性（可直接粘结电极）、降低界面阻抗', 
+            progress: '量产' 
+        },
+        { 
+            type: '固态电解质涂层', 
+            application: '半固态/准固态电池（混合固液体系）', 
+            source: '清陶、卫蓝、太蓝等固态电池公司专利', 
+            highlights: '在基膜上构建离子导电通道、抑制锂枝晶、提升电池安全性', 
+            progress: '预研' 
+        },
+        { 
+            type: '复合固态电解质', 
+            application: '（准）固态电池', 
+            source: '太蓝、金羽新能、学术论文', 
+            highlights: '将聚合物、氧化物等固态电解质与基膜复合，兼具机械支撑和离子传导功能', 
+            progress: '预研' 
+        }
+    ];
+
+    const manufacturersData = [
+        { company: '恩捷股份', type: '基膜+涂覆', info: 'PE基膜(湿法)，各类陶瓷/有机涂层', highlights: ['全球龙头', '超薄', '高强度', '涂布技术领先'], shipment: '大规模出货', cell_maker: 'CATL, LGES, 松下, 三星SDI', spec: '软包, 方壳, 圆柱', field: 'EV, PHEV, 储能, 消费' },
+        { company: '星源材质', type: '基膜+涂覆', info: 'PE基膜(干湿法)，陶瓷/有机涂层', highlights: ['干法龙头', '高安全', '耐高温', '成本控制'], shipment: '大规模出货', cell_maker: '比亚迪, LGES, 国轩高科', spec: '方壳(LFP), 储能', field: 'EV, 储能' },
+        { company: '中材科技', type: '基膜+涂覆', info: 'PE基膜(湿法)，高安全涂层', highlights: ['高安全', '高孔隙率', '浸润性好'], shipment: '大规模出货', cell_maker: 'CATL, 比亚迪, 中创新航', spec: '方壳, 软包', field: 'EV, 储能' },
+        { company: 'Celgard', type: '基膜', info: 'PP, PE基膜(干法)', highlights: ['干法鼻祖', '高可靠性', '微孔结构均匀'], shipment: '稳定出货', cell_maker: '全球各类高端应用', spec: '各类', field: '医疗, 军工, 特种' },
+        { company: 'SK IE Technology', type: '基膜+涂覆', info: 'PE基膜(湿法)，高耐热涂层', highlights: ['高耐热', '尺寸稳定性好', '超薄'], shipment: '大规模出货', cell_maker: 'SK On, LGES', spec: '软包', field: 'EV' },
+        { company: '旭化成(Asahi Kasei)', type: '基膜+涂覆', info: 'PE基膜(湿法)，无纺布，涂层', highlights: ['高安全', '耐热涂层技术'], shipment: '稳定出货', cell_maker: '松下, AESC', spec: '圆柱, 方壳', field: 'EV' },
+        { company: '璞泰来(旗下江苏卓立)', type: '涂覆', info: '陶瓷、勃姆石、PVDF等涂覆加工', highlights: ['涂覆技术专业', '高功能性涂层'], shipment: '大规模出货', cell_maker: 'CATL等', spec: '方壳, 软包', field: 'EV, 储能' },
+        { company: '卓高', type: '涂覆材料', info: '勃姆石、氧化铝粉体供应', highlights: ['勃姆石龙头', '粉体材料专业'], shipment: '大规模出货', cell_maker: '供应给涂覆厂', spec: '-', field: '隔膜涂覆原料' },
+        { company: '惠强新材', type: '基膜', info: 'PE基膜(干法)', highlights: ['高孔隙率', '高倍率性能'], shipment: '增长中', cell_maker: '国内多家二线电池厂', spec: '方壳(LFP)', field: '储能, 小动力' },
+        { company: '中兴新材', type: '基膜', info: 'PP, PE基膜(干法)', highlights: ['PP干法', '低成本', '高性价比'], shipment: '稳定出货', cell_maker: '比亚迪(部分), 储能客户', spec: '方壳(LFP)', field: '储能' },
+        { company: '泰和新材', type: '基膜', info: '芳纶基膜', highlights: ['芳纶材料', '超高耐热', '高安全'], shipment: '小批量/样品', cell_maker: '多家头部电芯厂测试中', spec: '各类', field: '特种应用, 高端EV' },
+        { company: '太蓝新能源', type: '固态电解质', info: '氧化物固态电解质膜', highlights: ['固态电解质', '高离子电导率', '高安全'], shipment: '样品', cell_maker: '自用/合作开发', spec: '固态电池', field: 'EV' },
+        { company: '金羽新能', type: '固态电解质', info: '复合固态电解质膜', highlights: ['固态', '高能量密度', '阻燃'], shipment: '样品', cell_maker: '合作开发', spec: '固态电池', field: '无人机, 特种电源' }
+    ];
+
+    const tab1Btn = document.getElementById('tab1-btn');
+    const tab2Btn = document.getElementById('tab2-btn');
+    const view1 = document.getElementById('view1');
+    const view2 = document.getElementById('view2');
+    const materialPropertiesTable = document.getElementById('material-properties-table');
+    const manufacturerTable = document.getElementById('manufacturer-table');
+    const searchInput = document.getElementById('searchInput');
+    let progressChart;
+
+    function switchView(viewToShow) {
+        if (viewToShow === 'view1') {
+            view1.classList.remove('hidden');
+            view2.classList.add('hidden');
+            tab1Btn.classList.add('tab-active');
+            tab2Btn.classList.remove('tab-active');
+        } else {
+            view1.classList.add('hidden');
+            view2.classList.remove('hidden');
+            tab1Btn.classList.remove('tab-active');
+            tab2Btn.classList.add('tab-active');
+        }
+    }
+
+    function renderMaterialPropertiesTable() {
+        materialPropertiesTable.innerHTML = '';
+        materialsData.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-stone-50 transition-colors duration-150";
+
+            let progressClass = '';
+            switch (item.progress) {
+                case '量产': progressClass = 'bg-green-100 text-green-800'; break;
+                case '小批量应用': progressClass = 'bg-blue-100 text-blue-800'; break;
+                case '预研': progressClass = 'bg-yellow-100 text-yellow-800'; break;
+                default: progressClass = 'bg-stone-100 text-stone-800';
+            }
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap"><div class="font-medium text-stone-900">${item.type}</div></td>
+                <td class="px-4 py-3 text-sm text-stone-500">${item.application}</td>
+                <td class="px-4 py-3 text-sm text-stone-500">${item.source}</td>
+                <td class="px-4 py-3 text-sm text-stone-500">${item.highlights}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="font-medium px-3 py-1 rounded-full ${progressClass}">${item.progress}</span></td>
+            `;
+            materialPropertiesTable.appendChild(tr);
+        });
+    }
+    
+    function renderProgressChart() {
+        const progressCounts = materialsData.reduce((acc, material) => {
+            acc[material.progress] = (acc[material.progress] || 0) + 1;
+            return acc;
+        }, {});
+
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        if (progressChart) {
+            progressChart.destroy();
+        }
+        progressChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(progressCounts),
+                datasets: [{
+                    label: '材料数量',
+                    data: Object.values(progressCounts),
+                    backgroundColor: [
+                        'rgba(13, 148, 136, 0.6)', // teal-600
+                        'rgba(245, 158, 11, 0.6)', // amber-500
+                        'rgba(59, 130, 246, 0.6)', // blue-500
+                    ],
+                    borderColor: [
+                        'rgba(13, 148, 136, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(59, 130, 246, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderManufacturerTable(filter = '') {
+        const lowercasedFilter = filter.toLowerCase();
+        const filteredData = manufacturersData.filter(item => {
+            return Object.values(item).some(val => 
+                String(val).toLowerCase().includes(lowercasedFilter)
+            );
+        });
+
+        manufacturerTable.innerHTML = '';
+        if (filteredData.length === 0) {
+            manufacturerTable.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-stone-500">未找到匹配项</td></tr>`;
+            return;
+        }
+
+        filteredData.forEach(item => {
+            const highlightsHtml = item.highlights.map(h => {
+                let colorClass = 'bg-stone-100 text-stone-700';
+                if (['龙头', '领先'].some(k => h.includes(k))) colorClass = 'bg-red-100 text-red-700';
+                if (['高安全', '高耐热', '阻燃'].some(k => h.includes(k))) colorClass = 'bg-yellow-100 text-yellow-700';
+                if (['超薄', '高孔'].some(k => h.includes(k))) colorClass = 'bg-blue-100 text-blue-700';
+                if (['固态'].some(k => h.includes(k))) colorClass = 'bg-purple-100 text-purple-700';
+                return `<span class="inline-block whitespace-nowrap mr-1 mb-1 px-2 py-0.5 text-xs font-medium rounded-full ${colorClass}">${h}</span>`;
+            }).join('');
+            
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-stone-50 transition-colors duration-150";
+            tr.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap"><div class="font-medium text-stone-900">${item.company}</div></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-stone-500">${item.type}</td>
+                <td class="px-4 py-3 text-sm text-stone-500">${item.info}</td>
+                <td class="px-4 py-3"><div class="flex flex-wrap">${highlightsHtml}</div></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-stone-500">${item.shipment}</td>
+                <td class="px-4 py-3 text-sm text-stone-500">${item.cell_maker}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-stone-500">${item.spec}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-stone-500">${item.field}</td>
+            `;
+            manufacturerTable.appendChild(tr);
+        });
+    }
+
+    tab1Btn.addEventListener('click', () => switchView('view1'));
+    tab2Btn.addEventListener('click', () => switchView('view2'));
+    
+    searchInput.addEventListener('input', (e) => {
+        renderManufacturerTable(e.target.value);
+    });
+
+    function init() {
+        switchView('view1');
+        renderMaterialPropertiesTable();
+        renderProgressChart();
+        renderManufacturerTable();
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>
+

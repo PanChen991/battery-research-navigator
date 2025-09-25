@@ -212,6 +212,62 @@ export const batteryReports: Report[] = [
     description: "硅负极材料技术与应用调研，包含材料特性和制造商应用分析",
     lastUpdated: "2024-02-24",
     htmlFile: "silicon-anode.html"
+  },
+  {
+    id: "material-4",
+    title: "电解液技术情报",
+    category: "材料技术",
+    description: "电解液技术情报交互数据库，涵盖电解液特性和厂商应用调研",
+    lastUpdated: "2024-02-23",
+    htmlFile: "electrolyte-tech.html"
+  },
+  {
+    id: "material-5",
+    title: "锂电池导电剂",
+    category: "材料技术",
+    description: "锂电池导电剂市场调研分析，包含材料特性和厂商应用情况",
+    lastUpdated: "2024-02-22",
+    htmlFile: "conductive-agent.html"
+  },
+  {
+    id: "material-6",
+    title: "动力电池粘结剂",
+    category: "材料技术",
+    description: "动力电池粘结剂市场与技术洞察，涵盖材料类型和制造商分析",
+    lastUpdated: "2024-02-21",
+    htmlFile: "binder-materials.html"
+  },
+  {
+    id: "material-7",
+    title: "电池隔膜技术",
+    category: "材料技术",
+    description: "电池隔膜技术与市场洞察，包含材料特性和制造商调研信息",
+    lastUpdated: "2024-02-20",
+    htmlFile: "separator-materials.html"
+  },
+  {
+    id: "material-8",
+    title: "动力电池胶带技术",
+    category: "材料技术",
+    description: "动力电池胶带技术与市场调研报告，涵盖胶带类型和供应商分析",
+    lastUpdated: "2024-02-19",
+    htmlFile: "adhesive-tape.html"
+  },
+  {
+    id: "material-9",
+    title: "电池箔材技术",
+    category: "材料技术",
+    description: "电池箔材技术与市场洞察平台，包含材料特性和厂商调研",
+    lastUpdated: "2024-02-18",
+    htmlFile: "foil-materials.html"
+  },
+  {
+    id: "material-10",
+    title: "电芯绝缘胶技术",
+    category: "材料技术",
+    description: "电芯绝缘胶技术与市场调研，涵盖材料特性和供应商信息",
+    lastUpdated: "2024-02-17",
+    htmlFile: "insulation-adhesive.html"
   }
 ];
 

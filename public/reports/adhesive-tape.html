@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动力电池胶带技术与市场调研报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Subtle Blue Accent -->
+    <!-- Application Structure Plan: A two-section SPA navigated by top buttons ('Tape Type', 'Supplier'). This separates the user's two core tasks, providing a focused view for each. Section 1 uses filters and a summary chart to analyze tape technologies. Section 2 uses filters and a comparative radar chart to evaluate suppliers. This structure is more intuitive than a single long page, allowing users to switch contexts easily and compare data within a specific frame of reference (either technology-focused or supplier-focused). -->
+    <!-- Visualization & Content Choices: Task 1 (Tape Types): Goal=Organize/Compare -> Interactive HTML table for detailed data, Filterable by type. Summary Bar Chart (Chart.js) to show development status counts (e.g., Mass Prod vs. R&D) for quick comparison. Task 2 (Suppliers): Goal=Compare/Analyze -> Interactive HTML table for all supplier details. Comparative Radar Chart (Chart.js) to visualize supplier strengths across 'Substrate Upgrade', 'Thinning', and 'Performance'. This offers a quick, multi-dimensional supplier profile. Interaction is driven by JS filters updating both tables and charts dynamically. This avoids static data presentation and encourages exploration. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8f9fa;
+        }
+        .tab-button.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">动力电池胶带技术与市场调研报告</h1>
+            <p class="text-md text-gray-600 mt-2">一份关于电芯内部关键胶带材料的交互式分析</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button id="nav-type" class="tab-button text-lg py-3 px-6 border-b-2 border-transparent transition-colors duration-300">按胶带特性分析</button>
+            <button id="nav-supplier" class="tab-button text-lg py-3 px-6 border-b-2 border-transparent transition-colors duration-300">按主要厂商调研</button>
+        </nav>
+
+        <main>
+            <!-- Section 1: Tape Characteristics Analysis -->
+            <section id="section-type">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">胶带关键特性分析</h2>
+                    <p class="text-gray-600 mb-6">本部分聚焦于不同功能性胶带的核心技术特性、应用方向和发展现状。您可以通过下方的筛选器查看特定类型的胶带，图表会同步更新以展示各类胶带的技术成熟度分布。</p>
+                     <div class="mb-6">
+                        <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-2">筛选胶带类型:</label>
+                        <select id="type-filter" class="w-full md:w-1/3 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">所有类型</option>
+                            <option value="膨胀胶带">膨胀胶带</option>
+                            <option value="导热胶带">导热胶带</option>
+                            <option value="智能化胶带">智能化胶带</option>
+                        </select>
+                    </div>
+                    <div class="chart-container mb-8">
+                        <canvas id="type-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">详细数据列表</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料类型</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">应用方向</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">信息来源</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料亮点</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">目前进展</th>
+                                </tr>
+                            </thead>
+                            <tbody id="type-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Supplier Research -->
+            <section id="section-supplier" class="hidden">
+                 <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">主要材料厂商调研</h2>
+                    <p class="text-gray-600 mb-6">本部分对行业内几家关键的胶带供应商进行了调研，分析其产品类型、技术亮点及市场应用情况。雷达图直观地展示了各厂商在核心技术发展方向上的综合实力对比。</p>
+                     <div class="mb-6">
+                        <label for="supplier-filter" class="block text-sm font-medium text-gray-700 mb-2">筛选材料厂商:</label>
+                        <select id="supplier-filter" class="w-full md:w-1/3 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">所有厂商</option>
+                            <option value="芜湖徽氏">芜湖徽氏</option>
+                            <option value="宁波顺凯">宁波顺凯</option>
+                            <option value="深圳睿晖">深圳睿晖</option>
+                            <option value="佛山永创">佛山永创</option>
+                        </select>
+                    </div>
+                    <div class="chart-container mb-8">
+                        <canvas id="supplier-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">详细数据列表</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">厂商</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">亮点</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">出货情况</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">电芯厂</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">电芯规格</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">应用领域</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">基材升级</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">超薄化</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">高性能改善</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supplier-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const appState = {
+            currentView: 'type',
+            typeFilter: 'all',
+            supplierFilter: 'all',
+        };
+
+        const typeData = [
+            { type: '膨胀胶带', application: '方形/软包电芯(CATL, BYD)', source: '材料厂(3M, Tesa), 专利(CN10*****8A)', highlight: '高温膨胀、主动安全防护、维持界面压力', status: '量产' },
+            { type: '膨胀胶带', application: '大型储能电芯', source: '研究论文(Journal of Power Sources)', highlight: '长循环寿命下压力补偿、降低DCR', status: '小批量验证' },
+            { type: '导热胶带', application: '圆柱电芯(Tesla/Panasonic), 模组', source: '材料厂(Laird, Henkel)', highlight: '高导热系数(>3.0W/mK)、高绝缘性', status: '量产' },
+            { type: '导热胶带', application: '快充电芯热管理', source: '车厂内部研报', highlight: '兼具导热与缓冲性能、降低热失控风险', status: '预研' },
+            { type: '导热胶带', application: '刀片电池(比亚迪)', source: '专利(CN21*****9U)', highlight: '结构件与导热功能一体化', status: '量产' },
+            { type: '智能化胶带', application: '未来固态电池', source: '专利(US202*****1A1)', highlight: '集成微型温度/压力传感器', status: '预研' },
+            { type: '智能化胶带', application: '高端车型(保时捷Taycan)', source: '学术会议(AABC)', highlight: '为BMS提供单体电芯实时数据、精准SOH/SOC估算', status: '概念验证' },
+        ];
+
+        const supplierData = [
+            { supplier: '芜湖徽氏', type: '膨胀/终止胶带', highlight: '成本优势、高粘性', shipment: '批量出货', cellMaker: 'CATL, 蜂巢能源', cellSpec: '方形, 软包', field: 'EV, PHEV', substrate: 'PET/PI复合', thinning: '15um开发中', performance: '耐电解液(中)' },
+            { supplier: '宁波顺凯', type: '导热/绝缘胶带', highlight: '高导热、耐高压', shipment: '小批量出货', cellMaker: '远景动力, LGES', cellSpec: '圆柱, 方形', field: '高端EV, 储能', substrate: '改性PI膜', thinning: '25um量产', performance: '耐高温(优)' },
+            { supplier: '深圳睿晖', type: '智能化/功能胶带', highlight: '集成传感、技术领先', shipment: '样品/预研', cellMaker: '头部电芯厂(预研合作)', cellSpec: '软包', field: '前瞻技术验证', substrate: '柔性基板', thinning: 'N/A', performance: '多功能集成(优)' },
+            { supplier: '佛山永创', type: '终止/保护胶带', highlight: '综合性能均衡', shipment: '批量出货', cellMaker: '比亚迪, 国轩高科', cellSpec: '方形(刀片)', field: 'EV, 储能', substrate: '改性PET', thinning: '20um量产', performance: '耐高压(良)' },
+        ];
+
+        const performanceMapping = { '中': 1, '良': 2, '优': 3, 'N/A': 0, '多功能集成(优)': 3 };
+        const substrateMapping = { 'PET/PI复合': 2, '改性PI膜': 3, '柔性基板': 3, '改性PET': 1 };
+        const thinningMapping = { '15um开发中': 2, '25um量产': 1, 'N/A': 0, '20um量产': 1.5 };
+
+
+        const navType = document.getElementById('nav-type');
+        const navSupplier = document.getElementById('nav-supplier');
+        const sectionType = document.getElementById('section-type');
+        const sectionSupplier = document.getElementById('section-supplier');
+
+        const typeFilter = document.getElementById('type-filter');
+        const typeTableBody = document.getElementById('type-table-body');
+        const supplierFilter = document.getElementById('supplier-filter');
+        const supplierTableBody = document.getElementById('supplier-table-body');
+        
+        let typeChartInstance, supplierChartInstance;
+
+        function navigate(view) {
+            appState.currentView = view;
+            if (view === 'type') {
+                navType.classList.add('active');
+                navSupplier.classList.remove('active');
+                sectionType.classList.remove('hidden');
+                sectionSupplier.classList.add('hidden');
+            } else {
+                navType.classList.remove('active');
+                navSupplier.classList.add('active');
+                sectionType.classList.add('hidden');
+                sectionSupplier.classList.remove('hidden');
+            }
+            render();
+        }
+
+        function renderTypeView() {
+            const filteredData = typeData.filter(item => 
+                appState.typeFilter === 'all' || item.type === appState.typeFilter
+            );
+
+            typeTableBody.innerHTML = filteredData.map(item => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.application}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.source}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.highlight}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            item.status === '量产' ? 'bg-green-100 text-green-800' : 
+                            item.status.includes('验证') ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
+                        }">
+                            ${item.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            updateTypeChart(filteredData);
+        }
+
+        function updateTypeChart(data) {
+            const statusCounts = data.reduce((acc, item) => {
+                acc[item.status] = (acc[item.status] || 0) + 1;
+                return acc;
+            }, {});
+
+            const chartData = {
+                labels: Object.keys(statusCounts),
+                datasets: [{
+                    label: '技术进展状态分布',
+                    data: Object.values(statusCounts),
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 99, 132, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            };
+
+            if (typeChartInstance) {
+                typeChartInstance.data = chartData;
+                typeChartInstance.update();
+            } else {
+                const ctx = document.getElementById('type-chart').getContext('2d');
+                typeChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: '各类型胶带技术成熟度分布',
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function renderSupplierView() {
+            const filteredData = supplierData.filter(item => 
+                appState.supplierFilter === 'all' || item.supplier === appState.supplierFilter
+            );
+
+            supplierTableBody.innerHTML = filteredData.map(item => `
+                <tr>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.supplier}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.type}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.highlight}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.shipment}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.cellMaker}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.cellSpec}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.field}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.substrate}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.thinning}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.performance}</td>
+                </tr>
+            `).join('');
+
+            updateSupplierChart(filteredData);
+        }
+
+        function updateSupplierChart(data) {
+            const chartLabels = ['基材升级', '超薄化进度', '高性能改善'];
+            const backgroundColors = [
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ];
+            const borderColors = [
+                'rgba(54, 162, 235, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 159, 64, 1)'
+            ];
+
+            const datasets = data.map((item, index) => ({
+                label: item.supplier,
+                data: [
+                    substrateMapping[item.substrate] || 0,
+                    thinningMapping[item.thinning] || 0,
+                    performanceMapping[item.performance] || 0,
+                ],
+                backgroundColor: backgroundColors[index % backgroundColors.length],
+                borderColor: borderColors[index % borderColors.length],
+                borderWidth: 2,
+                pointBackgroundColor: borderColors[index % borderColors.length],
+            }));
+
+            if(supplierChartInstance) {
+                supplierChartInstance.data.datasets = datasets;
+                supplierChartInstance.update();
+            } else {
+                const ctx = document.getElementById('supplier-chart').getContext('2d');
+                supplierChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '主要厂商技术能力对比',
+                                font: { size: 16 }
+                            },
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 3.5,
+                                pointLabels: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function render() {
+            if (appState.currentView === 'type') {
+                renderTypeView();
+            } else {
+                renderSupplierView();
+            }
+        }
+        
+        navType.addEventListener('click', () => navigate('type'));
+        navSupplier.addEventListener('click', () => navigate('supplier'));
+
+        typeFilter.addEventListener('change', (e) => {
+            appState.typeFilter = e.target.value;
+            renderTypeView();
+        });
+
+        supplierFilter.addEventListener('change', (e) => {
+            appState.supplierFilter = e.target.value;
+            renderSupplierView();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            navigate('type');
+        });
+    </script>
+</body>
+</html>
