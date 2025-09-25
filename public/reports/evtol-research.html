@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eVTOL 行业综合洞察报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+            background-color: #f8f7f4;
+            color: #3f3c3a;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .nav-button.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .table-header-sortable {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+        .table-header-sortable:hover {
+            background-color: #e5e7eb;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 450px;
+            max-height: 60vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">eVTOL 行业综合洞察报告</h1>
+            <p class="mt-4 text-lg text-gray-600">全球电动垂直起降飞行器市场、政策、动态与供应链分析</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8 overflow-x-auto">
+            <button id="nav-aircraft" class="nav-button active text-lg font-semibold py-4 px-6">飞行器数据库</button>
+            <button id="nav-policy" class="nav-button text-lg font-semibold py-4 px-6">行业政策</button>
+            <button id="nav-dynamics" class="nav-button text-lg font-semibold py-4 px-6">行业动态</button>
+            <button id="nav-supplychain" class="nav-button text-lg font-semibold py-4 px-6">供应链格局</button>
+        </nav>
+
+        <main>
+            <section id="aircraft-section">
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h2 class="text-2xl font-bold text-center mb-2">性能概览</h2>
+                    <p class="text-gray-600 text-center mb-6">通过此交互式图表，您可以直观地比较不同eVTOL机型的关键性能指标。将鼠标悬停在图表条目上可查看详细数据。</p>
+                    <div class="chart-container">
+                        <canvas id="aircraft-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center mb-6">详细数据对比</h2>
+                    <div class="mb-4">
+                        <input type="text" id="aircraft-search-input" placeholder="按公司或机型搜索..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="aircraft" data-sort-key="company">航空公司名称</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">机型</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">TC时间</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="aircraft" data-sort-key="payload">载重 (kg)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">电量 (kWh)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="aircraft" data-sort-key="range">航程 (km)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">功率 (kW)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">飞行时间 (min)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aircraft-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="policy-section" class="hidden">
+                 <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center mb-2">低空经济相关政策</h2>
+                    <p class="text-gray-600 text-center mb-8">下表汇总了近年来国家及地方层面出台的关键政策，为理解行业发展提供了宏观视角。您可以点击表头进行排序。</p>
+                     <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 w-1/3">政策名称</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="policy" data-sort-key="unit">发布单位</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="policy" data-sort-key="time">发布时间</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 w-1/2">内容简介</th>
+                                </tr>
+                            </thead>
+                            <tbody id="policy-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="dynamics-section" class="hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h2 class="text-2xl font-bold text-center mb-2">订单数量概览</h2>
+                    <p class="text-gray-600 text-center mb-6">通过此交互式图表，您可以直观地比较不同eVTOL制造商的订单情况。将鼠标悬停在图表条目上可查看详细数据。</p>
+                    <div class="chart-container">
+                        <canvas id="dynamics-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center mb-6">详细数据对比</h2>
+                    <div class="mb-4">
+                        <input type="text" id="dynamics-search-input" placeholder="按航空公司或机型搜索..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="dynamics" data-sort-key="company">航空公司/制造商</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">机型</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="dynamics" data-sort-key="orders">订单数量</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">地点/主要市场</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">时间节点</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dynamics-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="supplychain-section" class="hidden">
+                 <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-center mb-6">电池供应链合作关系</h2>
+                     <div class="mb-4">
+                        <input type="text" id="supplychain-search-input" placeholder="按电池厂或主机厂搜索..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 table-header-sortable" data-sort-group="supplychain" data-sort-key="supplier">竞品名称 (电池厂商)</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">电芯信息</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">主机厂/eVTOL航司</th>
+                                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600 w-1/3">合作详情</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supplychain-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 py-6 border-t border-gray-200">
+            <p class="text-gray-500">报告生成于 <span id="report-date"></span>。数据来源于公开渠道，仅供参考。</p>
+        </footer>
+    </div>
+
+    <script>
+        // Data Arrays
+        const aircraftData = [
+            { company: "亿航", model: "EH216-S", tc_time: "2023-10", payload: 220, battery: 'N/A', range: 35, power: 'N/A', duration: 21 },
+            { company: "峰飞", model: "盛世龙", tc_time: "申请中", payload: 400, battery: 'N/A', range: 250, power: 'N/A', duration: 'N/A' },
+            { company: "Joby Aviation", model: "S4", tc_time: "2025 (目标)", payload: 454, battery: 'N/A', range: 241, power: 'N/A', duration: 'N/A' },
+            { company: "Archer Aviation", model: "Midnight", tc_time: "2025 (目标)", payload: 450, battery: 'N/A', range: 161, power: 'N/A', duration: 'N/A' },
+            { company: "小鹏汇天", model: "旅航者X2", tc_time: "申请中", payload: 200, battery: 'N/A', range: 35, power: 'N/A', duration: 25 },
+            { company: "沃兰特", model: "VE25", tc_time: "申请中", payload: 500, battery: 'N/A', range: 200, power: 'N/A', duration: 'N/A' },
+            { company: "时的", model: "E20", tc_time: "申请中", payload: 450, battery: 'N/A', range: 200, power: 'N/A', duration: 'N/A' },
+            { company: "御风未来", model: "M1", tc_time: "申请中", payload: 500, battery: 'N/A', range: 250, power: 'N/A', duration: 'N/A' },
+            { company: "沃飞", model: "AE200", tc_time: "申请中", payload: 400, battery: 'N/A', range: 200, power: 'N/A', duration: 'N/A' },
+        ];
+
+        const policyData = [
+            { name: "《无人驾驶航空器飞行管理暂行条例》", unit: "国务院、中央军委", time: "2023-06", summary: "我国无人机发展的首部专门行政法规，规范了无人驾驶航空器的生产、销售、使用等环节，为低空空域的有序管理和开发提供了法律基础。" },
+            { name: "《“十四五”通用航空发展专项规划》", unit: "中国民航局", time: "2022-01", summary: "提出在“十四五”期间，推动通用航空与无人机新业态的融合发展，鼓励在城市空中交通、短途运输等领域开展试点，为eVTOL的应用场景探索提供了政策支持。" },
+            { name: "《低空经济发展白皮书》", unit: "深圳市交通运输局等", time: "2023-12", summary: "系统性地规划了深圳低空经济的发展蓝图，提出建设完善的地面基础设施和空中航路网络，并计划开通百条以上的市内无人机航线，是地方政府大力推动低空经济的典型代表。" },
+            { name: "中央经济工作会议首提“低空经济”", unit: "中共中央", time: "2023-12", summary: "首次将低空经济作为战略性新兴产业在中央经济工作会议中提出，标志着低空经济已上升为国家级战略，预示着未来将有更多国家层面的支持政策出台。" },
+            { name: "《通用航空装备创新应用实施方案（2024-2030年）》", unit: "工业和信息化部等四部门", time: "2024-03", summary: "目标到2030年，以高端化、智能化、绿色化为方向，在我国形成万亿级规模的通用航空产业市场。鼓励eVTOL等新型消费通用航空装备的发展，并推动其在城市空运、应急救援等领域的商业应用。" }
+        ];
+
+        const dynamicsData = [
+            { company: "Vertical Aerospace", model: "VX4", orders: 1500, market: "全球，客户包括美航、维珍大西洋等", timeline: "目标2025年投入服务" },
+            { company: "峰飞航空 (AutoFlight)", model: "盛世龙", orders: 1000, market: "全球市场，特别是中东", timeline: "2024年完成首次跨海跨城飞行" },
+            { company: "沃兰特航空 (Volant)", model: "VE25-100", orders: 500, market: "泰国、马尔代夫等东南亚市场", timeline: "订单于2025年7月签署" },
+            { company: "Archer Aviation", model: "Midnight", orders: 350, market: "美国 (纽约、芝加哥)、阿联酋 (迪拜)", timeline: "计划2025年启动商业运营" },
+            { company: "时的科技 (TCab Tech)", model: "E20", orders: 300, market: "中国及海外", timeline: "预计2025-2026年取证" },
+            { company: "亿航 (EHang)", model: "EH216-S", orders: 50, market: "中国多地低空旅游与客运", timeline: "2023年10月获全球首张TC证" },
+            { company: "Joby Aviation", model: "S4", orders: 0, market: "美国 (纽约、洛杉矶)、阿联酋 (迪拜)", timeline: "计划2025年投入商业运营" },
+            { company: "小鹏汇天 (XPeng AeroHT)", model: "陆地航母 (X3)", orders: 0, market: "中国", timeline: "计划2025年Q4开始量产交付" }
+        ];
+
+        const supplyChainData = [
+            { supplier: "Molicel (能元科技)", cell_info: "高功率圆柱锂离子电池", oem: "Archer Aviation, Vertical Aerospace", details: "为两家全球头部eVTOL公司提供电芯。Archer已签署MOU，Vertical早已确认合作。" },
+            { supplier: "中创新航 (CALB)", cell_info: "高能量密度电芯 (>300 Wh/kg), 半固态电池 (研发中)", oem: "小鹏汇天, 广汽高域", details: "与两家主机厂均达成独家战略合作。为小鹏汇天“陆地航母”独家供货；为广汽GOVY提供高能量密度电芯。" },
+            { supplier: "宁德时代 (CATL)", cell_info: "定制化高能量密度电池, 凝聚态电池技术储备", oem: "峰飞航空 (AutoFlight)", details: "对峰飞航空进行数亿美元的独家战略投资，并达成长期战略合作，共同研发专用电池。" },
+            { supplier: "孚能科技 (Farasis)", cell_info: "第二代半固态eVTOL电池", oem: "时的科技 (TCab Tech)", details: "成为时的科技E20机型的独家电池供应商，标志着半固态电池在eVTOL领域的商业应用。" },
+            { supplier: "巨湾技研 (GAC Aion)", cell_info: "超快充电池", oem: "亿航 (EHang)", details: "与亿航达成战略合作，为EH216-S等机型开发满足4C及以上快充需求的电池系统。" },
+            { supplier: "主机厂自研/供应商未明确", cell_info: "Joby: NMC 811软包电芯; 沃兰特/御风未来: 未公开", oem: "Joby Aviation, 沃兰特航空, 御风未来", details: "Joby采用垂直整合模式，自研电池包，外购电芯。其他公司可能处于供应商筛选或保密阶段。" }
+        ];
+
+        // State Management
+        let sortConfigs = {
+            aircraft: { key: 'company', direction: 'asc' },
+            policy: { key: 'time', direction: 'desc' },
+            dynamics: { key: 'company', direction: 'asc' },
+            supplychain: { key: 'supplier', direction: 'asc' }
+        };
+        let aircraftChartInstance = null;
+        let dynamicsChartInstance = null;
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setupNavigation();
+            setupEventListeners();
+            
+            renderAllTables();
+            createAllCharts();
+
+            updateAllSortIcons();
+        });
+        
+        // --- Setup Functions ---
+        function setupNavigation() {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const sections = document.querySelectorAll('main > section');
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Deactivate all
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    sections.forEach(sec => sec.classList.add('hidden'));
+
+                    // Activate clicked
+                    button.classList.add('active');
+                    const targetSectionId = button.id.replace('nav-', '') + '-section';
+                    const targetSection = document.getElementById(targetSectionId);
+                    if (targetSection) {
+                        targetSection.classList.remove('hidden');
+                    }
+                    
+                    // Resize charts if they become visible
+                    if (targetSectionId === 'aircraft-section' && aircraftChartInstance) {
+                         setTimeout(() => aircraftChartInstance.resize(), 0);
+                    }
+                    if (targetSectionId === 'dynamics-section' && dynamicsChartInstance) {
+                         setTimeout(() => dynamicsChartInstance.resize(), 0);
+                    }
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('report-date').textContent = new Date().toLocaleDateString('zh-CN');
+            
+            document.getElementById('aircraft-search-input').addEventListener('input', (e) => renderAircraftTable(e.target.value));
+            document.getElementById('dynamics-search-input').addEventListener('input', (e) => renderDynamicsTable(e.target.value));
+            document.getElementById('supplychain-search-input').addEventListener('input', (e) => renderSupplyChainTable(e.target.value));
+
+            document.querySelectorAll('.table-header-sortable').forEach(header => {
+                header.addEventListener('click', () => handleSort(header));
+            });
+        }
+
+        // --- Sorting Logic ---
+        function handleSort(header) {
+            const group = header.dataset.sortGroup;
+            const key = header.dataset.sortKey;
+            
+            let currentSort = sortConfigs[group];
+
+            if (currentSort.key === key) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.direction = 'asc';
+            }
+            
+            switch(group) {
+                case 'aircraft': renderAircraftTable(); break;
+                case 'policy': renderPolicyTable(); break;
+                case 'dynamics': renderDynamicsTable(); break;
+                case 'supplychain': renderSupplyChainTable(); break;
+            }
+        }
+        
+        function updateAllSortIcons() {
+            Object.keys(sortConfigs).forEach(group => updateSortIcons(group));
+        }
+
+        function updateSortIcons(group) {
+            document.querySelectorAll(`[data-sort-group="${group}"]`).forEach(header => {
+                const key = header.dataset.sortKey;
+                const currentSort = sortConfigs[group];
+                
+                let text = header.textContent.replace(/ [▲▼]/g, '');
+                
+                if (key === currentSort.key) {
+                     header.innerHTML = `${text} ${currentSort.direction === 'asc' ? '&#x25B2;' : '&#x25BC;'}`;
+                } else {
+                     header.innerHTML = text;
+                }
+            });
+        }
+
+        function sortData(data, sortConfig) {
+            return [...data].sort((a, b) => {
+                const valA = a[sortConfig.key] === undefined ? (typeof a[sortConfig.key] === 'number' ? 0 : '') : a[sortConfig.key];
+                const valB = b[sortConfig.key] === undefined ? (typeof b[sortConfig.key] === 'number' ? 0 : '') : b[sortConfig.key];
+                
+                let comparison = 0;
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    comparison = valA - valB;
+                } else {
+                    comparison = String(valA).localeCompare(String(valB), 'zh-Hans-CN');
+                }
+                
+                return sortConfig.direction === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        // --- Table Rendering ---
+        function renderAllTables() {
+            renderAircraftTable();
+            renderPolicyTable();
+            renderDynamicsTable();
+            renderSupplyChainTable();
+        }
+
+        function renderAircraftTable(filter = '') {
+            const tableBody = document.getElementById('aircraft-table-body');
+            const filterText = filter.toLowerCase();
+            let filteredData = aircraftData.filter(item => 
+                item.company.toLowerCase().includes(filterText) || 
+                item.model.toLowerCase().includes(filterText)
+            );
+            
+            const sorted = sortData(filteredData, sortConfigs.aircraft);
+            tableBody.innerHTML = sorted.map(item => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="py-4 px-4">${item.company}</td><td class="py-4 px-4">${item.model}</td>
+                    <td class="py-4 px-4">${item.tc_time || 'N/A'}</td><td class="py-4 px-4">${item.payload || 'N/A'}</td>
+                    <td class="py-4 px-4">${item.battery || 'N/A'}</td><td class="py-4 px-4">${item.range || 'N/A'}</td>
+                    <td class="py-4 px-4">${item.power || 'N/A'}</td><td class="py-4 px-4">${item.duration || 'N/A'}</td>
+                </tr>`).join('');
+            updateSortIcons('aircraft');
+        }
+        
+        function renderPolicyTable() {
+            const tableBody = document.getElementById('policy-table-body');
+            const sorted = sortData(policyData, sortConfigs.policy);
+            tableBody.innerHTML = sorted.map(item => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="py-4 px-4">${item.name}</td><td class="py-4 px-4">${item.unit}</td>
+                    <td class="py-4 px-4">${item.time}</td><td class="py-4 px-4">${item.summary}</td>
+                </tr>`).join('');
+            updateSortIcons('policy');
+        }
+
+        function renderDynamicsTable(filter = '') {
+            const tableBody = document.getElementById('dynamics-table-body');
+            const filterText = filter.toLowerCase();
+            let filteredData = dynamicsData.filter(item => 
+                item.company.toLowerCase().includes(filterText) || 
+                item.model.toLowerCase().includes(filterText)
+            );
+            
+            const sorted = sortData(filteredData, sortConfigs.dynamics);
+            tableBody.innerHTML = sorted.map(item => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="py-4 px-4 font-semibold">${item.company}</td>
+                    <td class="py-4 px-4">${item.model}</td>
+                    <td class="py-4 px-4">${item.orders > 0 ? (item.orders === 350 ? '250+100意向' : (item.orders === 50 ? '50+450意向' : item.orders + ' (预估/意向)')) : '未公布'}</td>
+                    <td class="py-4 px-4">${item.market}</td>
+                    <td class="py-4 px-4">${item.timeline}</td>
+                </tr>`).join('');
+            updateSortIcons('dynamics');
+        }
+        
+        function renderSupplyChainTable(filter = '') {
+            const tableBody = document.getElementById('supplychain-table-body');
+             const filterText = filter.toLowerCase();
+            let filteredData = supplyChainData.filter(item => 
+                item.supplier.toLowerCase().includes(filterText) || 
+                item.oem.toLowerCase().includes(filterText)
+            );
+
+            const sorted = sortData(filteredData, sortConfigs.supplychain);
+            tableBody.innerHTML = sorted.map(item => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="py-4 px-4 font-semibold">${item.supplier}</td>
+                    <td class="py-4 px-4">${item.cell_info}</td>
+                    <td class="py-4 px-4">${item.oem}</td>
+                    <td class="py-4 px-4">${item.details}</td>
+                </tr>`).join('');
+            updateSortIcons('supplychain');
+        }
+
+        // --- Chart Creation ---
+        function createAllCharts() {
+            createAircraftChart();
+            createDynamicsChart();
+        }
+        
+        function createAircraftChart() {
+            const ctx = document.getElementById('aircraft-chart').getContext('2d');
+            const chartData = sortData(aircraftData, { key: 'range', direction: 'desc' });
+            
+            if (aircraftChartInstance) aircraftChartInstance.destroy();
+
+            aircraftChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(d => `${d.company} ${d.model}`),
+                    datasets: [
+                        { label: '航程 (km)', data: chartData.map(d => d.range || 0), backgroundColor: 'rgba(59, 130, 246, 0.7)', yAxisID: 'y' },
+                        { label: '载重 (kg)', data: chartData.map(d => d.payload || 0), backgroundColor: 'rgba(34, 197, 94, 0.7)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true },
+                        y: { type: 'category', title: { display: true, text: '飞行器型号' } },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '载重 (kg)' } }
+                    },
+                    plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+        }
+        
+        function createDynamicsChart() {
+            const ctx = document.getElementById('dynamics-chart').getContext('2d');
+            const chartData = sortData(dynamicsData.filter(d => d.orders > 0), { key: 'orders', direction: 'desc' });
+            
+            if (dynamicsChartInstance) dynamicsChartInstance.destroy();
+
+            dynamicsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(d => `${d.company} (${d.model})`),
+                    datasets: [{ 
+                        label: '订单数量 (含预估/意向)', 
+                        data: chartData.map(d => d.orders), 
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1 
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: '订单数' } },
+                        y: { type: 'category' }
+                    },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.x !== null) { label += context.parsed.x + ' 架'; }
+                                    return label;
+                                }
+                            }
+                        } 
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

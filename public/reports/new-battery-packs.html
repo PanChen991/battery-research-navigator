@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动力电池技术与市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        th, td {
+            white-space: nowrap;
+        }
+        tr:nth-child(even) {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="min-h-screen">
+        <header class="bg-white shadow-sm">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <h1 class="text-3xl font-bold text-sky-700">🔋 动力电池技术与市场洞察</h1>
+                <p class="mt-2 text-slate-600">汇集全球主要厂商的最新电池包(Pack)技术信息。使用下方的筛选工具快速查找您需要的数据。</p>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <input type="text" id="searchInput" placeholder="🔍 按任意关键词搜索..." class="col-span-1 md:col-span-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                    <select id="chemistryFilter" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                        <option value="all">所有化学体系</option>
+                        <option value="LFP">磷酸铁锂 (LFP)</option>
+                        <option value="三元">三元 (NCM/NCA)</option>
+                        <option value="半固态">半固态</option>
+                        <option value="高镍">高镍</option>
+                    </select>
+                    <select id="formFactorFilter" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                        <option value="all">所有电芯形态</option>
+                        <option value="方形">方形</option>
+                        <option value="软包">软包</option>
+                        <option value="圆柱">圆柱</option>
+                        <option value="刀片">刀片</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="w-full min-w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">厂家</th>
+                                <th scope="col" class="px-6 py-3">产品名称</th>
+                                <th scope="col" class="px-6 py-3">容量/电量</th>
+                                <th scope="col" class="px-6 py-3">功率</th>
+                                <th scope="col" class="px-6 py-3">电芯产品形态</th>
+                                <th scope="col" class="px-6 py-3">电芯化学体系</th>
+                                <th scope="col" class="px-6 py-3">应用车型</th>
+                                <th scope="col" class="px-6 py-3 min-w-[300px]">创新点</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tech-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                 <div id="no-results" class="text-center py-10 hidden">
+                    <p class="text-slate-500 text-lg">未找到符合条件的技术信息。</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    const allData = [
+        {
+            manufacturer: '宁德时代 (CATL)',
+            productName: '神行超充电池',
+            capacity: '140 kWh (估算)',
+            power: '4C 充电',
+            formFactor: '方形',
+            chemistry: 'LFP',
+            models: '阿维塔11, 奇瑞星途星纪元ES',
+            innovation: '全球首款磷酸铁锂4C超充电池，充电10分钟续航400公里，实现“充电无焦虑”。'
+        },
+        {
+            manufacturer: '宁德时代 (CATL)',
+            productName: '麒麟电池 (CTP 3.0)',
+            capacity: '140 kWh',
+            power: 'N/A',
+            formFactor: '方形',
+            chemistry: '三元',
+            models: '极氪001 WE版, 理想MEGA',
+            innovation: '无模组CTP技术，体积利用率突破72%，系统能量密度达255Wh/kg。'
+        },
+        {
+            manufacturer: '比亚迪 (BYD)',
+            productName: '刀片电池',
+            capacity: '82.5 kWh',
+            power: 'N/A',
+            formFactor: '刀片',
+            chemistry: 'LFP',
+            models: '比亚迪汉, 海豹, 唐',
+            innovation: '高安全性的CTP技术，将电芯做成“刀片”状，提升空间利用率和结构强度。'
+        },
+        {
+            manufacturer: '国轩高科 (Gotion)',
+            productName: 'L600 启晨电池',
+            capacity: '140 kWh',
+            power: 'N/A',
+            formFactor: '软包',
+            chemistry: 'LFP',
+            models: '未上市/概念车',
+            innovation: '采用层状结构和功能集成设计，系统能量密度190Wh/kg，支持1000公里续航。'
+        },
+        {
+            manufacturer: '蜂巢能源 (SVOLT)',
+            productName: '龙鳞甲电池',
+            capacity: '117 kWh',
+            power: 'N/A',
+            formFactor: '方形',
+            chemistry: 'LFP',
+            models: '概念阶段',
+            innovation: '热电分离和空间功能集成设计，提升电池包底部防护能力和空间利用率。'
+        },
+        {
+            manufacturer: '亿纬锂能 (EVE)',
+            productName: 'π 电池系统',
+            capacity: 'N/A',
+            power: '9分钟超快充',
+            formFactor: '圆柱',
+            chemistry: '高镍',
+            models: '宝马新世代车型 (合作)',
+            innovation: '基于46系列大圆柱电芯，高集成度设计，实现快充和长续航的平衡。'
+        },
+        {
+            manufacturer: '中创新航 (CALB)',
+            productName: '“U型”电池',
+            capacity: 'N/A',
+            power: 'N/A',
+            formFactor: '方形',
+            chemistry: '三元',
+            models: '广汽埃安等',
+            innovation: '顶部“U”型结构改善了热交换效率和结构强度，提升了电池的安全性和寿命。'
+        },
+        {
+            manufacturer: '蔚来 (NIO)',
+            productName: '150kWh 半固态电池包',
+            capacity: '150 kWh',
+            power: 'N/A',
+            formFactor: '软包',
+            chemistry: '半固态',
+            models: '蔚来ET7, ES8, ES6',
+            innovation: '采用固液混合电解质，能量密度高达360Wh/kg，单次充电续航超1000公里。'
+        },
+        {
+            manufacturer: '特斯拉 (Tesla)',
+            productName: '4680 结构化电池包',
+            capacity: '约 98 kWh',
+            power: 'N/A',
+            formFactor: '圆柱',
+            chemistry: '高镍',
+            models: 'Tesla Model Y (部分), Cybertruck',
+            innovation: 'CTC技术，将4680大圆柱电芯直接集成到底盘中，减轻重量，提升整车刚性。'
+        },
+        {
+            manufacturer: '极氪 (Zeekr)',
+            productName: '金砖电池',
+            capacity: '95-100 kWh',
+            power: '5C充电 (峰值500kW)',
+            formFactor: '方形',
+            chemistry: 'LFP',
+            models: '极氪007',
+            innovation: '800V架构下的磷酸铁锂快充电池，充电15分钟续航增加500公里，体积利用率83.7%。'
+        }
+    ];
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        applyFilters();
+
+        const searchInput = document.getElementById('searchInput');
+        const chemistryFilter = document.getElementById('chemistryFilter');
+        const formFactorFilter = document.getElementById('formFactorFilter');
+        
+        searchInput.addEventListener('input', applyFilters);
+        chemistryFilter.addEventListener('change', applyFilters);
+        formFactorFilter.addEventListener('change', applyFilters);
+    });
+    
+    function applyFilters() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const chemistry = document.getElementById('chemistryFilter').value;
+        const formFactor = document.getElementById('formFactorFilter').value;
+
+        const filteredData = allData.filter(item => {
+            const matchesSearch = Object.values(item).some(val => 
+                String(val).toLowerCase().includes(searchText)
+            );
+            
+            const matchesChemistry = chemistry === 'all' || item.chemistry === chemistry;
+            const matchesFormFactor = formFactor === 'all' || item.formFactor === formFactor;
+
+            return matchesSearch && matchesChemistry && matchesFormFactor;
+        });
+
+        renderTable(filteredData);
+    }
+
+    function renderTable(data) {
+        const tableBody = document.getElementById('tech-table-body');
+        const noResults = document.getElementById('no-results');
+        
+        if (data.length > 0) {
+            tableBody.innerHTML = data.map(item => `
+                <tr class="bg-white border-b hover:bg-sky-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">${item.manufacturer}</td>
+                    <td class="px-6 py-4">${item.productName}</td>
+                    <td class="px-6 py-4">${item.capacity}</td>
+                    <td class="px-6 py-4">${item.power}</td>
+                    <td class="px-6 py-4"><span class="bg-sky-100 text-sky-800 font-medium py-1 px-2 rounded-md">${item.formFactor}</span></td>
+                    <td class="px-6 py-4"><span class="bg-cyan-100 text-cyan-800 font-medium py-1 px-2 rounded-md">${item.chemistry}</span></td>
+                    <td class="px-6 py-4">${item.models}</td>
+                    <td class="px-6 py-4 text-slate-600" style="white-space: normal;">${item.innovation}</td>
+                </tr>
+            `).join('');
+            noResults.classList.add('hidden');
+            tableBody.parentElement.classList.remove('hidden');
+        } else {
+            tableBody.innerHTML = '';
+            noResults.classList.remove('hidden');
+            tableBody.parentElement.classList.add('hidden');
+        }
+    }
+</script>
+
+</body>
+</html>

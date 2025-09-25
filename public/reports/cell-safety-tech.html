@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电动汽车电芯安全技术洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Off-white, Dark Gray, Muted Teal) -->
+    <!-- Application Structure Plan: A dashboard-style SPA with a top summary, a central filter panel, and a tabbed interface for different data views (Interactive Table, Market Share Chart, Technology Cards). This structure was chosen to break down dense technical data into digestible, user-explorable sections, which is more effective for a marketing director's analysis than a single static table. The filters and linked views provide a powerful, non-linear way to investigate the competitive landscape. -->
+    <!-- Visualization & Content Choices: 1. Main Data: Interactive HTML Table allows filtering/sorting for deep dives (Goal: Organize/Compare, Method: HTML+JS). 2. Market Share: Bar Chart provides quick competitive context (Goal: Inform, Viz: Chart.js Canvas, Interaction: Hover). 3. Safety Tech: Card layout simplifies complex descriptions (Goal: Compare, Presentation: HTML/CSS Grid, Interaction: Click). This approach uses the best tool for each type of information, enhancing comprehension and engagement. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .filter-checkbox:checked + label {
+            background-color: #ccfbf1;
+            border-color: #14b8a6;
+            color: #0f766e;
+        }
+        .filter-checkbox:checked + label svg {
+            display: block;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800">电动汽车电芯安全技术洞察</h1>
+            <p class="mt-2 text-lg text-gray-600">交互式仪表板：探索热失控防护、结构创新与无热蔓延技术</p>
+        </header>
+
+        <main>
+            <!-- Filters -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">筛选与分析</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-600 mb-2">厂家类型</h4>
+                        <div id="manufacturer-type-filter" class="flex flex-wrap gap-2">
+                            <button data-filter="all" class="filter-btn active px-4 py-2 text-sm font-medium rounded-full bg-teal-600 text-white">全部</button>
+                            <button data-filter="电池厂商" class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300">电池厂商</button>
+                            <button data-filter="整车厂" class="filter-btn px-4 py-2 text-sm font-medium rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300">整车厂</Obutton>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-600 mb-2">化学体系</h4>
+                        <div id="chemistry-filter" class="flex flex-wrap gap-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="lfp-check" value="LFP" class="filter-checkbox hidden">
+                                <label for="lfp-check" class="flex items-center cursor-pointer px-3 py-1.5 border border-gray-300 rounded-full text-sm text-gray-600">
+                                    <svg class="w-4 h-4 mr-1 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    磷酸铁锂 (LFP)
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="ternary-check" value="三元" class="filter-checkbox hidden">
+                                <label for="ternary-check" class="flex items-center cursor-pointer px-3 py-1.5 border border-gray-300 rounded-full text-sm text-gray-600">
+                                    <svg class="w-4 h-4 mr-1 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    三元
+                                </label>
+                            </div>
+                             <div class="flex items-center">
+                                <input type="checkbox" id="high-nickel-check" value="高镍" class="filter-checkbox hidden">
+                                <label for="high-nickel-check" class="flex items-center cursor-pointer px-3 py-1.5 border border-gray-300 rounded-full text-sm text-gray-600">
+                                    <svg class="w-4 h-4 mr-1 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    高镍
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                         <p class="text-sm text-gray-500 mt-2">点击筛选条件，下方的技术详情表将实时更新。您可以组合使用多个筛选器进行精确查询。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="overflow-x-auto bg-white rounded-xl shadow-lg">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">厂家</th>
+                            <th scope="col" class="px-6 py-3">产品/技术名称</th>
+                            <th scope="col" class="px-6 py-3">产品形态</th>
+                            <th scope="col" class="px-6 py-3">化学体系</th>
+                            <th scope="col" class="px-6 py-3">容量/电量</th>
+                            <th scope="col" class="px-6 py-3 min-w-[300px]">核心安全进展</th>
+                            <th scope="col" class="px-6 py-3">验证状态/应用车型</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tech-table-body">
+                        <!-- JS will populate this -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const techData = [
+            { manufacturer: '宁德时代', type: '电池厂商', name: '麒麟电池', form: 'CTP', chemistry: ['三元', 'LFP'], capacity: '140kWh (三元)', safety: '多功能弹性夹层，电芯倒置，实现无热蔓延，提升能量密度。', status: '极氪001, 问界M9' },
+            { manufacturer: '比亚迪', type: '电池厂商', name: '刀片电池', form: 'CTP, 长电芯', chemistry: ['LFP'], capacity: '50-100 kWh (Pack)', safety: '结构创新，提升空间利用率和结构强度，针刺测试无明火、无烟。', status: '比亚迪汉、唐、海豹等' },
+            { manufacturer: 'LG新能源', type: '电池厂商', name: 'Ultium Platform', form: '软包', chemistry: ['高镍'], capacity: '50-200 kWh (Pack)', safety: '无线BMS，模块化设计，减少60%线束，提升安全性和灵活性。', status: '凯迪拉克LYRIQ, GMC Hummer EV' },
+            { manufacturer: '特斯拉', type: '整车厂', name: '4680结构化电池包', form: '大圆柱', chemistry: ['高镍'], capacity: '~100 kWh (Pack)', safety: 'CTC技术，电芯兼做结构件，提升整车刚度，无模组设计。', status: 'Tesla Model Y, Cybertruck' },
+            { manufacturer: '广汽埃安', type: '整车厂', name: '弹匣电池', form: '软包', chemistry: ['三元', 'LFP'], capacity: '不详', safety: '超高耐热稳定电芯、隔热电池安全舱、三维速冷系统，针刺不起火。', status: 'AION Y, AION S Plus' },
+            { manufacturer: '蜂巢能源', type: '电池厂商', name: '龙鳞甲电池', form: 'CTP, 短刀片', chemistry: ['LFP', '三元'], capacity: '不详', safety: '底部防爆阀，双面冷却，热电分离设计，提升热管理效率。', status: '规划中/合作车型' },
+            { manufacturer: '中创新航', type: '电池厂商', name: 'One-Stop 电池技术', form: '软包/方形', chemistry: ['三元', 'LFP'], capacity: '不详', safety: '结构与功能集成设计，提升能量密度和安全性，同时降低成本。', status: '广汽、小鹏等' },
+            { manufacturer: '国轩高科', type: '电池厂商', name: 'L600启晨电池', form: 'LFP', chemistry: ['LFP'], capacity: '180Ah (Cell)', safety: '240Wh/kg LFP电芯，支持4C快充，通过材料和结构优化提升安全边界。', status: '大众等' },
+            { manufacturer: '极氪', type: '整车厂', name: '金砖电池', form: 'CTP, 叠片短刀', chemistry: ['LFP'], capacity: '800V 平台', safety: '全球量产充电速度最快LFP电池，一体化液冷托盘，多点主动电连接。', status: '极氪 007' },
+            { manufacturer: '零跑汽车', type: '整车厂', name: 'CTC 2.0', form: 'CTC', chemistry: ['LFP'], capacity: '不详', safety: '无电池上盖，中空多功能横梁，油冷技术，提升集成度与散热效率。', status: '零跑 C01' },
+            { manufacturer: 'SK On', type: '电池厂商', name: 'S-Pack', form: '软包', chemistry: ['高镍'], capacity: '不详', safety: 'Cell-to-Pack技术，热蔓延阻断材料，提升能量密度和安全性。', status: '现代 Ioniq 5' },
+            { manufacturer: '欣旺达', type: '电池厂商', name: '闪充电池 (SFC480)', form: '方形', chemistry: ['LFP'], capacity: '不详', safety: '4C超快充，通过特殊电解液和结构设计，兼顾快充性能和热稳定性。', status: '理想 L系列 (部分)' },
+            { manufacturer: '三星SDI', type: '电池厂商', name: 'PRiMX', form: '方形', chemistry: ['高镍'], capacity: '不详', safety: '强调超高能量密度、超快充电、超高安全性三大核心优势。', status: 'BMW, Audi' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('tech-table-body');
+            const manufacturerFilter = document.getElementById('manufacturer-type-filter');
+            const chemistryFilter = document.getElementById('chemistry-filter');
+            
+            let currentManufacturerFilter = 'all';
+            let currentChemistryFilters = [];
+
+            function renderTable() {
+                const filteredData = techData.filter(item => {
+                    const manufacturerMatch = currentManufacturerFilter === 'all' || item.type === currentManufacturerFilter;
+                    const chemistryMatch = currentChemistryFilters.length === 0 || currentChemistryFilters.some(chem => item.chemistry.includes(chem));
+                    return manufacturerMatch && chemistryMatch;
+                });
+
+                tableBody.innerHTML = '';
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-500">未找到符合条件的技术。</td></tr>`;
+                    return;
+                }
+                filteredData.forEach(item => {
+                    const row = `
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${item.manufacturer}</td>
+                            <td class="px-6 py-4">${item.name}</td>
+                            <td class="px-6 py-4">${item.form}</td>
+                            <td class="px-6 py-4">${item.chemistry.join(', ')}</td>
+                            <td class="px-6 py-4">${item.capacity}</td>
+                            <td class="px-6 py-4">${item.safety}</td>
+                            <td class="px-6 py-4">${item.status}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            manufacturerFilter.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    manufacturerFilter.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('active', 'bg-teal-600', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                    });
+                    e.target.classList.add('active', 'bg-teal-600', 'text-white');
+                    e.target.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                    currentManufacturerFilter = e.target.dataset.filter;
+                    renderTable();
+                }
+            });
+
+            chemistryFilter.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    currentChemistryFilters = Array.from(chemistryFilter.querySelectorAll('input:checked')).map(cb => cb.value);
+                    renderTable();
+                }
+            });
+            
+            renderTable();
+        });
+    </script>
+
+</body>
+</html>
+

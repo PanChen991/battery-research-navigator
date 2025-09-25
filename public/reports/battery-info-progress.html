@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁锂圆柱46系列电芯市场调研报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei';
+            background-color: #f8f9fa;
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+    <!-- Chosen Palette: Calm Neutrals -->
+    <!-- Application Structure Plan: A simplified, single-view dashboard. The structure is now focused entirely on a powerful, interactive data table. The top provides context and filter controls (search by company, filter by OEM). The main content area is the data table itself. This streamlined structure is chosen to provide the most direct and efficient way for users to query and analyze the specific tabular data requested, removing any extraneous navigation or visualizations. -->
+    <!-- Visualization & Content Choices: 
+        1. Main Data: Report Info -> 5 columns of data. Goal -> Organize & Compare. Viz/Presentation -> An interactive HTML table. Interaction -> Live text search and dropdown filtering. Justification -> A table is the most effective format for direct comparison of structured data points across multiple entities. The filters make this large dataset easily manageable. Library/Method -> Vanilla JS for DOM manipulation and filtering logic. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">近5年铁锂圆柱46系列电芯市场调研</h1>
+            <p class="text-gray-600 mt-2">交互式数据表</p>
+        </header>
+
+        <main id="content-overview">
+            <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+                <p class="text-gray-700 leading-relaxed">
+                    本报告聚焦于过去五年（约2020-2025年）全球范围内磷酸铁锂（LFP）化学体系的46系列（如4680, 4695等）大圆柱电芯市场。大圆柱电芯因其在能量密度、成本、制造效率和安全性方面的潜在优势，已成为下一代动力电池的关键技术路线之一。此交互式数据表旨在梳理主要电池制造商在该领域的布局、技术参数、与整车厂的合作关系以及关键时间节点，为战略决策提供数据支持。您可以使用下方的筛选器快速查找信息。
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <input type="text" id="company-search" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="🔍 按电池公司名称搜索...">
+                <select id="oem-filter" class="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all">所有整车厂</option>
+                </select>
+            </div>
+
+            <div id="table-wrapper" class="overflow-x-auto bg-white rounded-lg shadow-md">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">电池公司名称</th>
+                            <th scope="col" class="px-6 py-3 min-w-[300px]">电芯信息</th>
+                            <th scope="col" class="px-6 py-3">整车厂信息</th>
+                            <th scope="col" class="px-6 py-3 min-w-[300px]">合作关键信息</th>
+                            <th scope="col" class="px-6 py-3">发布时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                </table>
+            </div>
+             <div id="no-results" class="text-center py-12 text-gray-500 hidden">
+                <p class="text-xl">未找到匹配的结果。</p>
+            </div>
+        </main>
+        
+    </div>
+
+    <script>
+        const reportData = [
+            {
+                company: "宁德时代 (CATL)",
+                cellInfo: "麒麟电池技术可适配4680及其他46系列规格。铁锂版系统能量密度达160Wh/kg，电芯能量密度约210-230Wh/kg。支持4C快充，结构上采用多功能弹性夹层，提升安全性与寿命。",
+                oem: ["特斯拉", "宝马", "理想汽车", "赛力斯"],
+                cooperation: "已向特斯拉上海工厂供应4680电芯样品，并成为宝马“新世代”车型圆柱电芯供应商。同时为理想汽车首款纯电MPV MEGA和问界M9供应麒麟电池。",
+                date: "2022-06"
+            },
+            {
+                company: "亿纬锂能 (EVE Energy)",
+                cellInfo: "主推4695规格大圆柱电池，同时布局4680、46105等型号。铁锂版电芯能量密度据称可达208Wh/kg，容量为14.7Ah。采用全极耳结构，降低内阻。",
+                oem: ["宝马", "Rimac", "大运汽车"],
+                cooperation: "获得宝马“新世代”车型主供应商资格，将在中国和欧洲建厂供应。与Rimac Automobili达成合作，为大运汽车供应46系列大圆柱电池。",
+                date: "2022-09"
+            },
+            {
+                company: "特斯拉 (Tesla)",
+                cellInfo: "自研4680电芯，早期为NMC高镍体系。已开始在德州超级工厂生产“赛博卡车(Cybertruck)”专用电芯，能量密度提升10%。持续研发低成本的铁锂或富锰铁锂版4680，但具体参数未公布。",
+                oem: ["特斯拉"],
+                cooperation: "电芯主要供内部使用，已搭载于Model Y和Cybertruck车型。同时从LG新能源、松下等外部采购4680电芯。",
+                date: "2022-04"
+            },
+            {
+                company: "LG新能源 (LGES)",
+                cellInfo: "开发4680及4695等多种规格。早期为高镍NCMA体系（能量密度约300Wh/kg）。已明确规划开发铁锂(LFP)和锰基(LMFP)大圆柱电池，预计2025年后量产，主打成本优势市场。",
+                oem: ["特斯拉", "现代汽车", "通用汽车"],
+                cooperation: "已在韩国梧仓工厂量产4680电芯并供应特斯拉。在美国亚利桑那州建设新工厂，部分产线将用于生产LFP/LMFP圆柱电芯。",
+                date: "2023-03"
+            },
+            {
+                company: "国轩高科 (Gotion)",
+                cellInfo: "发布4695圆柱电芯，铁锂版容量13.5Ah，能量密度243Wh/kg。采用第二代硅碳负极和新型电解液，支持3C快充。",
+                oem: ["大众汽车", "VinFast", "塔塔汽车"],
+                cooperation: "大众汽车为其第一大股东，深度战略合作。已向VinFast和印度塔塔汽车供货，但4695电芯的具体合作方尚不明确。",
+                date: "2023-05"
+            },
+            {
+                company: "比克电池 (BAK Power)",
+                cellInfo: "推出全系列大圆柱产品（4680, 4695, 46105等）。铁锂版电芯能量密度≥175Wh/kg，循环寿命超过2500次。注重高安全性和长寿命。",
+                oem: ["江淮汽车", "一汽"],
+                cooperation: "与多家国内整车厂进行合作洽谈与送样测试。已获得江淮汽车等公司的定点项目。",
+                date: "2022-11"
+            },
+            {
+                company: "远景动力 (Envision AESC)",
+                cellInfo: "开发新一代46mm直径大圆柱电池，能量密度将比现有产品提升20%。同时研发LFP体系，但具体参数和尺寸系列尚未公布。",
+                oem: ["宝马", "梅赛德斯-奔驰", "日产"],
+                cooperation: "获得宝马美国工厂的大圆柱电池订单，将于2026年开始供货。同时为奔驰、日产等国际车企提供动力电池解决方案。",
+                date: "2022-10"
+            },
+            {
+                company: "三星SDI (Samsung SDI)",
+                cellInfo: "开发直径46mm、高度40-120mm不等的多种圆柱电池，其中包含LFP路线。目标是实现能量密度、快充和寿命的行业领先，但未公布具体参数。",
+                oem: ["宝马", "Stellantis", "现代汽车"],
+                cooperation: "已与宝马、Stellantis、现代等签署供应协议或建立合资工厂。其46系列大圆柱电池预计将在2026年开始量产。",
+                date: "2023-09"
+            }
+        ];
+        
+        const tableWrapper = document.getElementById('table-wrapper');
+        const tableBody = document.getElementById('table-body');
+        const companySearch = document.getElementById('company-search');
+        const oemFilter = document.getElementById('oem-filter');
+        const noResults = document.getElementById('no-results');
+
+        function populateOemFilter() {
+            const oems = new Set();
+            reportData.forEach(item => {
+                item.oem.forEach(oem => oems.add(oem));
+            });
+            const sortedOems = Array.from(oems).sort();
+            sortedOems.forEach(oem => {
+                const option = document.createElement('option');
+                option.value = oem;
+                option.textContent = oem;
+                oemFilter.appendChild(option);
+            });
+        }
+
+        function renderTable(filteredData) {
+            tableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                noResults.classList.remove('hidden');
+                tableWrapper.classList.add('hidden');
+                return;
+            }
+            noResults.classList.add('hidden');
+            tableWrapper.classList.remove('hidden');
+
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-gray-50';
+                
+                const oemTags = item.oem.map(oem => `<span class="tag bg-blue-100 text-blue-800">${oem}</span>`).join('');
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">${item.company}</td>
+                    <td class="px-6 py-4">${item.cellInfo}</td>
+                    <td class="px-6 py-4"><div class="flex flex-wrap">${oemTags}</div></td>
+                    <td class="px-6 py-4">${item.cooperation}</td>
+                    <td class="px-6 py-4">${item.date}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function filterData() {
+            const searchTerm = companySearch.value.toLowerCase();
+            const selectedOem = oemFilter.value;
+
+            const filtered = reportData.filter(item => {
+                const matchesCompany = item.company.toLowerCase().includes(searchTerm);
+                const matchesOem = selectedOem === 'all' || item.oem.includes(selectedOem);
+                return matchesCompany && matchesOem;
+            });
+            renderTable(filtered);
+        }
+        
+        companySearch.addEventListener('input', filterData);
+        oemFilter.addEventListener('change', filterData);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateOemFilter();
+            renderTable(reportData);
+        });
+
+    </script>
+</body>
+</html>
+

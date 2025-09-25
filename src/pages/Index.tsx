@@ -20,9 +20,10 @@ const Index = () => {
   }, [selectedCategory, searchQuery]);
 
   const handleViewReport = (reportId: string) => {
-    // 这里可以添加打开HTML报告的逻辑
-    console.log("Opening report:", reportId);
-    // 例如：window.open(`/reports/${reportId}.html`, '_blank');
+    const report = batteryReports.find(r => r.id === reportId);
+    if (report) {
+      window.open(`/reports/${report.htmlFile}`, '_blank');
+    }
   };
 
   return (

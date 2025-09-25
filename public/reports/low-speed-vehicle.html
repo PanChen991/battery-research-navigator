@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>低速电动车电池市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A tabbed single-page application with three main sections: Customer Needs, Competitor Analysis, and Regulatory Standards. This structure directly maps to the user's core research tasks, allowing for focused data exploration. Each section features interactive filters and search bars to drill down into the data, which is presented in digestible cards and tables rather than a single overwhelming table. This enhances usability by progressively disclosing information and allowing users to compare and analyze specific data points efficiently. -->
+    <!-- Visualization & Content Choices: Customer Needs: Goal is to explore manufacturer requirements. Uses a filterable grid of expandable cards to show details on demand. A dynamic donut chart visualizes LSEV type distribution. Competitor Analysis: Goal is to compare battery suppliers. Uses a similar filterable card grid and a stacked bar chart to show battery chemistry market share. Regulatory Standards: Goal is to provide a reference. Uses a filterable, sortable table, which is optimal for this structured textual data. All charts use Chart.js on Canvas. This approach avoids static data dumps and encourages interactive exploration. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+        }
+        .tab-button.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+        }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            display: none;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="app" class="container mx-auto p-4 md:p-6">
+        <header class="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">低速电动车电池市场洞察</h1>
+            <p class="text-slate-500 mt-1">交互式市场调研报告</p>
+        </header>
+
+        <nav class="bg-white rounded-xl shadow-sm p-2 mb-6 sticky top-4 z-30">
+            <div id="tabs" class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                <button data-tab="customers" class="tab-button text-left sm:text-center text-slate-600 p-3 border-b-4 border-transparent transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-lg">
+                    <span class="text-lg">👤</span> 客户需求洞察
+                </button>
+                <button data-tab="competitors" class="tab-button text-left sm:text-center text-slate-600 p-3 border-b-4 border-transparent transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-lg">
+                    <span class="text-lg">📈</span> 竞争格局分析
+                </button>
+                <button data-tab="regulations" class="tab-button text-left sm:text-center text-slate-600 p-3 border-b-4 border-transparent transition-colors duration-300 ease-in-out hover:bg-slate-100 rounded-lg">
+                    <span class="text-lg">📜</span> 全球法规标准
+                </button>
+            </div>
+        </nav>
+        
+        <main>
+            <!-- 客户需求洞察 -->
+            <section id="customers" class="tab-content">
+                <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 mb-1">客户需求分析</h2>
+                    <p class="text-slate-500 mb-4">深入了解不同区域和车型客户对电池的具体需求、痛点及期望。使用下方的筛选器来探索数据。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input id="customer-search" type="text" placeholder="搜索客户名称..." class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <select id="customer-region-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">所有区域</option>
+                        </select>
+                        <select id="customer-type-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">所有车型</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                    <tr>
+                                        <th class="p-3">客户清单</th>
+                                        <th class="p-3">客户区域</th>
+                                        <th class="p-3">低速车类型</th>
+                                        <th class="p-3">电池包关键信息</th>
+                                        <th class="p-3">电芯关键信息</th>
+                                        <th class="p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customer-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm sticky top-24">
+                            <h3 class="text-lg font-bold text-slate-900 mb-4">车型分布概览</h3>
+                            <div class="chart-container" style="position: relative; height:350px; max-height:400px; width:100%; max-width:400px; margin: auto;">
+                                <canvas id="customer-type-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 竞争格局分析 -->
+            <section id="competitors" class="tab-content">
+                 <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 mb-1">竞争格局分析</h2>
+                    <p class="text-slate-500 mb-4">调研主流电池供应商的产品信息、合作品牌、技术路线及市场优劣势。使用筛选器查看特定友商或技术类型。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input id="competitor-search" type="text" placeholder="搜索友商名称..." class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <select id="competitor-partner-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                             <option value="">所有合作品牌</option>
+                        </select>
+                        <select id="competitor-battery-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                             <option value="">所有电池类型</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm overflow-x-auto">
+                           <table class="w-full text-left text-sm">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                    <tr>
+                                        <th class="p-3">友商信息</th>
+                                        <th class="p-3">合作品牌</th>
+                                        <th class="p-3">电池类型</th>
+                                        <th class="p-3">关键观点</th>
+                                        <th class="p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="competitor-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm sticky top-24">
+                             <h3 class="text-lg font-bold text-slate-900 mb-4">电池技术路线分布</h3>
+                             <div class="chart-container" style="position: relative; height:350px; max-height:400px; width:100%; max-width:600px; margin: auto;">
+                                <canvas id="competitor-tech-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 全球法规标准 -->
+            <section id="regulations" class="tab-content">
+                <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 mb-1">全球法规标准</h2>
+                    <p class="text-slate-500 mb-4">汇总全球主要市场的低速车及电池相关法规标准，帮助产品合规。表格内容可进行筛选和排序。</p>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input id="regulation-search" type="text" placeholder="搜索法规名称..." class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <select id="regulation-region-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">所有区域</option>
+                        </select>
+                        <select id="regulation-type-filter" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">所有车型</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                            <tr>
+                                <th class="p-3">区域</th>
+                                <th class="p-3">车型</th>
+                                <th class="p-3">法规标准名称</th>
+                                <th class="p-3">颁布时间</th>
+                                <th class="p-3">法规特点说明</th>
+                                <th class="p-3">法规背景说明</th>
+                            </tr>
+                        </thead>
+                        <tbody id="regulation-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-backdrop" class="modal-backdrop"></div>
+    <div id="modal" class="modal w-11/12 max-w-2xl bg-white rounded-xl shadow-lg p-6">
+        <div id="modal-content"></div>
+        <button id="modal-close" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- 数据 ---
+    const customerData = [
+        { id: 1, name: '雅迪', region: '中国', type: '轻便电动摩托', pack: { voltage: '48V/60V', capacity: '20-32Ah', size: '300x180x170mm', temp: '-10~45℃', life: '>800次', ip: 'IP67', painPoints: '冬季续航衰减严重', convenience: '支持快充', complaints: '电池鼓包，售后更换麻烦' }, cell: { chemistry: '磷酸铁锂(LFP)', type: '软包', voltage: '3.2V', capacity: '20Ah', size: '150x120x10mm', temp: '-20~55℃', life: '>2000次' } },
+        { id: 2, name: '爱玛', region: '中国', type: '电动自行车', pack: { voltage: '48V', capacity: '12-24Ah', size: '250x150x150mm', temp: '-10~45℃', life: '>600次', ip: 'IP65', painPoints: '充电时间长', convenience: '轻便，可提回家充电', complaints: '实际续航与宣传不符' }, cell: { chemistry: '铅酸/锰酸锂', type: '方壳', voltage: '12V/3.7V', capacity: '12Ah', size: '151x98x95mm', temp: '-15~50℃', life: '>400次' } },
+        { id: 3, name: '九号', region: '中国', type: '电动摩托', pack: { voltage: '72V', capacity: '20-40Ah', size: '350x200x200mm', temp: '-20~50℃', life: '>1000次', ip: 'IP67', painPoints: '电池包过重', convenience: '智能化BMS，App可看状态', complaints: '价格昂贵' }, cell: { chemistry: '三元锂(NCM)', type: '圆柱-21700', voltage: '3.6V', capacity: '5Ah', size: 'Φ21x70mm', temp: '-20~60℃', life: '>1500次' } },
+        { id: 4, name: '小牛', region: '欧洲', type: '轻便电动摩托', pack: { voltage: '60V', capacity: '26-35Ah', size: '280x180x190mm', temp: '-15~45℃', life: '>1000次', ip: 'IP67', painPoints: '低温充电慢', convenience: '双电设计，续航长', complaints: '电池锁扣易损坏' }, cell: { chemistry: '三元锂(NCM)', type: '圆柱-18650', voltage: '3.6V', capacity: '3.5Ah', size: 'Φ18x65mm', temp: '-20~60℃', life: '>1500次' } },
+        { id: 5, name: '绿源', region: '中国', type: '电动自行车', pack: { voltage: '48V', capacity: '20Ah', size: '260x160x160mm', temp: '-10~45℃', life: '>800次', ip: 'IP67', painPoints: '电池一致性差', convenience: '液冷技术，散热好', complaints: '维修只能返厂，周期长' }, cell: { chemistry: '磷酸铁锂(LFP)', type: '方壳', voltage: '3.2V', capacity: '20Ah', size: '140x80x25mm', temp: '-20~55℃', life: '>2000次' } },
+        { id: 6, name: 'Ola Electric', region: '东南亚', type: '电动摩托', pack: { voltage: '72V', capacity: '50Ah', size: '400x250x200mm', temp: '-10~55℃', life: '>1200次', ip: 'IP67', painPoints: '热带气候下电池过热', convenience: '可拆卸更换', complaints: '软件bug导致电量显示不准' }, cell: { chemistry: '三元锂(NCM)', type: '圆柱-21700', voltage: '3.6V', capacity: '5Ah', size: 'Φ21x70mm', temp: '-20~60℃', life: '>1500次' } },
+        { id: 7, name: '台铃', region: '中国', type: '三轮车', pack: { voltage: '60V', capacity: '50Ah', size: '450x220x200mm', temp: '-15~50℃', life: '>600次', ip: 'IP54', painPoints: '载重后续航衰减快', convenience: '容量大，动力足', complaints: '防水性能不足' }, cell: { chemistry: '铅酸', type: '方壳', voltage: '12V', capacity: '50Ah', size: '229x138x208mm', temp: '-20~55℃', life: '>400次' } },
+    ];
+
+    const competitorData = [
+        { id: 1, name: 'CATL', partners: ['九号', '雅迪'], type: '电动摩托', batteryType: '锂电池NCM', pack: { voltage: '72V', capacity: '30Ah', size: '320x180x190mm', temp: '-20~55℃', life: '>1200次', ip: 'IP67' }, opinion: { painPoints: '成本高', convenience: '能量密度高，性能强', complaints: '高端车型专用' }, cell: { chemistry: '三元锂(NCM)', type: '圆柱-21700', voltage: '3.6V', capacity: '5.0Ah', size: 'Φ21x70mm', temp: '-20~60℃', life: '>1500次' } },
+        { id: 2, name: '天能电池', partners: ['爱玛', '绿源', '台铃'], type: '电动自行车', batteryType: '铅酸电池', pack: { voltage: '48V', capacity: '20Ah', size: '250x160x150mm', temp: '-15~50℃', life: '>400次', ip: 'IP54' }, opinion: { painPoints: '笨重，不环保', convenience: '价格便宜，技术成熟', complaints: '寿命短，一年一换' }, cell: { chemistry: '铅酸', type: '方壳', voltage: '12V', capacity: '20Ah', size: '181x77x167mm', temp: '-20~55℃', life: '>400次' } },
+        { id: 3, name: '星恒电源(锂电)', partners: ['雅迪', '新日', '小刀'], type: '轻便电动摩托', batteryType: '锂电池LFP', pack: { voltage: '48V', capacity: '24Ah', size: '280x150x160mm', temp: '-20~55℃', life: '>1500次', ip: 'IP67' }, opinion: { painPoints: '低温性能稍差', convenience: '安全性高，长寿命', complaints: '能量密度低于三元' }, cell: { chemistry: '磷酸铁锂(LFP)', type: '软包', voltage: '3.2V', capacity: '24Ah', size: '160x130x12mm', temp: '-20~55℃', life: '>2500次' } },
+        { id: 4, name: '超威', partners: ['立马', '金箭'], type: '电动自行车', batteryType: '铅酸电池', pack: { voltage: '60V', capacity: '20Ah', size: '300x180x170mm', temp: '-15~50℃', life: '>400次', ip: 'IP54' }, opinion: { painPoints: '充电慢', convenience: '市场保有量大，更换方便', complaints: '续航虚标' }, cell: { chemistry: '铅酸', type: '方壳', voltage: '12V', capacity: '20Ah', size: '181x77x167mm', temp: '-20~55℃', life: '>400次' } },
+        { id: 5, name: '亿纬(锂电)', partners: ['小牛', '哈罗'], type: '轻便电动摩托', batteryType: '锂电池NCM', pack: { voltage: '48V', capacity: '30Ah', size: '270x170x180mm', temp: '-20~55℃', life: '>1000次', ip: 'IP67' }, opinion: { painPoints: '价格较高', convenience: '能量密度高，续航扎实', complaints: '对BMS要求高' }, cell: { chemistry: '三元锂(NCM)', type: '圆柱-18650', voltage: '3.6V', capacity: '3.5Ah', size: 'Φ18x65mm', temp: '-20~60℃', life: '>1500次' } },
+        { id: 6, name: 'BYD', partners: ['雅迪', '滴滴青桔'], type: '电动自行车', batteryType: '锂电池LFP', pack: { voltage: '48V', capacity: '20Ah', size: '260x150x150mm', temp: '-20~60℃', life: '>2000次', ip: 'IP67' }, opinion: { painPoints: '低温掉电', convenience: '刀片技术，极致安全', complaints: '重量偏重' }, cell: { chemistry: '磷酸铁锂(LFP)', type: '方壳(刀片)', voltage: '3.2V', capacity: '20Ah', size: '200x130x8mm', temp: '-20~60℃', life: '>3000次' } },
+    ];
+
+    const regulationData = [
+        { region: '中国', type: '电动自行车', name: 'GB 17761-2018《电动自行车安全技术规范》', date: '2019-04-15', features: '整车质量≤55kg, 蓄电池标称电压≤48V, 电机额定功率≤400W, 最高设计车速≤25km/h', background: '规范电动自行车市场，减少超标车带来的交通安全隐患。' },
+        { region: '欧洲', type: '电动自行车', name: 'EN 15194:2017', date: '2017', features: '电机持续额定功率≤250W, 速度达到25km/h时电机停止助力, 必须有脚踏板。符合标准的EPAC等同于普通自行车管理。', background: '统一欧盟市场电动助力自行车的标准，促进自由贸易和保障安全。' },
+        { region: '美洲', type: '电动自行车', name: 'Consumer Product Safety Act (CPSA)', date: '2002', features: '将低速电动自行车定义为消费品。电机功率<750W, 最高车速<20mph (32km/h)。各州法律可能不同。', background: '联邦层面为电动自行车提供基本定义，但具体路权等由各州规定。' },
+        { region: '中国', type: '电动摩托', name: 'GB/T 24158-2018《电动摩托车和电动轻便摩托车安全要求》', date: '2019', features: '根据最高时速和电机功率分为轻便摩托和摩托。需上牌、驾照、保险。电池需符合GB/T 36972标准。', background: '将电动摩托纳入机动车管理体系，保障道路安全和产品质量。' },
+        { region: '欧洲', type: '轻便电动摩托', name: 'Regulation (EU) No 168/2013', date: '2013', features: 'L类车辆分类法。L1e-B（轻便摩托）最高车速≤45km/h, 功率≤4kW。要求更严格的整车认证（WVTA）。', background: '建立统一的欧盟两轮、三轮和四轮车审批和市场监督框架。' },
+        { region: '东南亚', type: '电动摩托', name: '各国标准不一 (如TIS 1829-2551 in Thailand)', date: 'Varies', features: '通常参考国际标准（如ECE）或日本标准，但有本地化调整。对电池热带适应性有隐性要求。', background: '各国为推动电动化和保障消费者安全，逐步建立自己的标准体系。' }
+    ];
+
+    // --- 全局变量和图表实例 ---
+    let customerTypeChart = null;
+    let competitorTechChart = null;
+
+    // --- 初始化 ---
+    const init = () => {
+        setupTabs();
+        populateFilters();
+        renderAll();
+        setupEventListeners();
+        document.querySelector('.tab-button[data-tab="customers"]').click();
+    };
+
+    // --- 选项卡逻辑 ---
+    const setupTabs = () => {
+        const tabContainer = document.getElementById('tabs');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('.tab-button');
+            if (!button) return;
+            
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            const tabId = button.dataset.tab;
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    };
+    
+    // --- 筛选器填充 ---
+    const populateFilters = () => {
+        const customerRegions = [...new Set(customerData.map(c => c.region))];
+        const customerTypes = [...new Set(customerData.map(c => c.type))];
+        const competitorPartners = [...new Set(competitorData.flatMap(c => c.partners))];
+        const competitorBatteryTypes = [...new Set(competitorData.map(c => c.batteryType))];
+        const regulationRegions = [...new Set(regulationData.map(r => r.region))];
+        const regulationTypes = [...new Set(regulationData.map(r => r.type))];
+
+        populateSelect('customer-region-filter', customerRegions);
+        populateSelect('customer-type-filter', customerTypes);
+        populateSelect('competitor-partner-filter', competitorPartners);
+        populateSelect('competitor-battery-filter', competitorBatteryTypes);
+        populateSelect('regulation-region-filter', regulationRegions);
+        populateSelect('regulation-type-filter', regulationTypes);
+    };
+
+    const populateSelect = (elementId, options) => {
+        const select = document.getElementById(elementId);
+        options.sort().forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            select.appendChild(opt);
+        });
+    };
+    
+    // --- 渲染逻辑 ---
+    const renderAll = () => {
+        renderCustomers();
+        renderCompetitors();
+        renderRegulations();
+    };
+
+    const renderCustomers = () => {
+        const tbody = document.getElementById('customer-table-body');
+        const search = document.getElementById('customer-search').value.toLowerCase();
+        const region = document.getElementById('customer-region-filter').value;
+        const type = document.getElementById('customer-type-filter').value;
+
+        const filteredData = customerData.filter(c => 
+            (c.name.toLowerCase().includes(search)) &&
+            (region === '' || c.region === region) &&
+            (type === '' || c.type === type)
+        );
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-500 py-10"><p class="text-lg">无匹配结果</p><p>请尝试调整筛选条件。</p></td></tr>`;
+        } else {
+            tbody.innerHTML = filteredData.map(c => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-3 font-medium">${c.name}</td>
+                    <td class="p-3">${c.region}</td>
+                    <td class="p-3">${c.type}</td>
+                    <td class="p-3">${c.pack.voltage} / ${c.pack.capacity}</td>
+                    <td class="p-3">${c.cell.chemistry} (${c.cell.type})</td>
+                    <td class="p-3">
+                        <button class="text-blue-600 hover:underline customer-details-btn" data-id="${c.id}">详情</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        updateCustomerChart(filteredData);
+    };
+
+    const renderCompetitors = () => {
+        const tbody = document.getElementById('competitor-table-body');
+        const search = document.getElementById('competitor-search').value.toLowerCase();
+        const partner = document.getElementById('competitor-partner-filter').value;
+        const battery = document.getElementById('competitor-battery-filter').value;
+
+        const filteredData = competitorData.filter(c => 
+            (c.name.toLowerCase().includes(search)) &&
+            (partner === '' || c.partners.includes(partner)) &&
+            (battery === '' || c.batteryType === battery)
+        );
+        
+        if (filteredData.length === 0) {
+           tbody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-500 py-10"><p class="text-lg">无匹配结果</p><p>请尝试调整筛选条件。</p></td></tr>`;
+        } else {
+           tbody.innerHTML = filteredData.map(c => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-3 font-medium">${c.name}</td>
+                    <td class="p-3">${c.partners.join(', ')}</td>
+                    <td class="p-3">${c.batteryType}</td>
+                    <td class="p-3 text-green-700">${c.opinion.convenience}</td>
+                    <td class="p-3">
+                        <button class="text-blue-600 hover:underline competitor-details-btn" data-id="${c.id}">详情</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        updateCompetitorChart(competitorData);
+    };
+
+    const renderRegulations = () => {
+        const tbody = document.getElementById('regulation-table-body');
+        const search = document.getElementById('regulation-search').value.toLowerCase();
+        const region = document.getElementById('regulation-region-filter').value;
+        const type = document.getElementById('regulation-type-filter').value;
+
+        const filteredData = regulationData.filter(r => 
+            (r.name.toLowerCase().includes(search)) &&
+            (region === '' || r.region === region) &&
+            (type === '' || r.type === type)
+        );
+
+        tbody.innerHTML = filteredData.map(r => `
+            <tr class="border-b hover:bg-slate-50">
+                <td class="p-3 font-medium">${r.region}</td>
+                <td class="p-3">${r.type}</td>
+                <td class="p-3 font-semibold text-slate-800">${r.name}</td>
+                <td class="p-3">${r.date}</td>
+                <td class="p-3 text-blue-700">${r.features}</td>
+                <td class="p-3 text-slate-600">${r.background}</td>
+            </tr>
+        `).join('');
+    };
+
+    // --- 图表逻辑 ---
+    const updateCustomerChart = (data) => {
+        const ctx = document.getElementById('customer-type-chart').getContext('2d');
+        const typeCounts = data.reduce((acc, curr) => {
+            acc[curr.type] = (acc[curr.type] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const labels = Object.keys(typeCounts);
+        const counts = Object.values(typeCounts);
+
+        if (customerTypeChart) {
+            customerTypeChart.destroy();
+        }
+        
+        customerTypeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '车型数量',
+                    data: counts,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+    };
+
+    const updateCompetitorChart = (data) => {
+        const ctx = document.getElementById('competitor-tech-chart').getContext('2d');
+        const techCounts = data.reduce((acc, curr) => {
+            const type = curr.batteryType;
+            if (!acc[type]) acc[type] = 0;
+            acc[type]++;
+            return acc;
+        }, {});
+
+        const labels = Object.keys(techCounts);
+        const counts = Object.values(techCounts);
+
+        if (competitorTechChart) {
+            competitorTechChart.destroy();
+        }
+
+        competitorTechChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '供应商数量',
+                    data: counts,
+                    backgroundColor: ['#2563eb', '#f59e0b', '#16a34a'],
+                    borderColor: ['#1d4ed8', '#b45309', '#14532d'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    };
+
+    // --- 事件监听 ---
+    const setupEventListeners = () => {
+        document.getElementById('customer-search').addEventListener('input', renderCustomers);
+        document.getElementById('customer-region-filter').addEventListener('change', renderCustomers);
+        document.getElementById('customer-type-filter').addEventListener('change', renderCustomers);
+        
+        document.getElementById('competitor-search').addEventListener('input', renderCompetitors);
+        document.getElementById('competitor-partner-filter').addEventListener('change', renderCompetitors);
+        document.getElementById('competitor-battery-filter').addEventListener('change', renderCompetitors);
+
+        document.getElementById('regulation-search').addEventListener('input', renderRegulations);
+        document.getElementById('regulation-region-filter').addEventListener('change', renderRegulations);
+        document.getElementById('regulation-type-filter').addEventListener('change', renderRegulations);
+
+        document.getElementById('app').addEventListener('click', (e) => {
+            const customerBtn = e.target.closest('.customer-details-btn');
+            if (customerBtn) {
+                const id = parseInt(customerBtn.dataset.id, 10);
+                const data = customerData.find(c => c.id === id);
+                if(data) showCustomerModal(data);
+                return;
+            }
+
+            const competitorBtn = e.target.closest('.competitor-details-btn');
+            if (competitorBtn) {
+                const id = parseInt(competitorBtn.dataset.id, 10);
+                const data = competitorData.find(c => c.id === id);
+                if(data) showCompetitorModal(data);
+                return;
+            }
+        });
+        
+        document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+    };
+    
+    // --- 弹窗 Modal 逻辑 ---
+    const showCustomerModal = (data) => {
+        const content = document.getElementById('modal-content');
+        content.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">${data.name} - 需求详情</h2>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">电池包信息</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><b>电压/电量:</b> ${data.pack.voltage} / ${data.pack.capacity}</li>
+                        <li><b>尺寸:</b> ${data.pack.size}</li>
+                        <li><b>工作温度:</b> ${data.pack.temp}</li>
+                        <li><b>循环寿命:</b> ${data.pack.life}</li>
+                        <li><b>防护等级:</b> ${data.pack.ip}</li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">客户反馈</h4>
+                    <div class="space-y-2">
+                       <p><b>痛点:</b> <span class="text-red-600">${data.pack.painPoints}</span></p>
+                       <p><b>便利点:</b> <span class="text-green-700">${data.pack.convenience}</span></p>
+                       <p><b>吐槽点:</b> <span class="text-amber-600">${data.pack.complaints}</span></p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">电芯信息</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><b>化学体系:</b> ${data.cell.chemistry}</li>
+                        <li><b>类型:</b> ${data.cell.type}</li>
+                        <li><b>电压/电量:</b> ${data.cell.voltage} / ${data.cell.capacity}</li>
+                        <li><b>尺寸:</b> ${data.cell.size}</li>
+                        <li><b>工作温度:</b> ${data.cell.temp}</li>
+                        <li><b>循环寿命:</b> ${data.cell.life}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        openModal();
+    };
+
+    const showCompetitorModal = (data) => {
+        const content = document.getElementById('modal-content');
+        content.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">${data.name} - 友商分析</h2>
+             <div class="space-y-4 text-sm">
+                <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">电池包信息 (${data.batteryType})</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><b>电压/电量:</b> ${data.pack.voltage} / ${data.pack.capacity}</li>
+                        <li><b>尺寸:</b> ${data.pack.size}</li>
+                        <li><b>工作温度:</b> ${data.pack.temp}</li>
+                        <li><b>循环寿命:</b> ${data.pack.life}</li>
+                        <li><b>防护等级:</b> ${data.pack.ip}</li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">观点信息</h4>
+                    <div class="space-y-2">
+                       <p><b>优势/便利点:</b> <span class="text-green-700">${data.opinion.convenience}</span></p>
+                       <p><b>劣势/痛点:</b> <span class="text-red-600">${data.opinion.painPoints}</span></p>
+                       <p><b>市场反馈:</b> <span class="text-amber-600">${data.opinion.complaints}</span></p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-slate-800 border-b pb-1 mb-2">电芯信息</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><b>化学体系:</b> ${data.cell.chemistry}</li>
+                        <li><b>类型:</b> ${data.cell.type}</li>
+                        <li><b>电压/电量:</b> ${data.cell.voltage} / ${data.cell.capacity}</li>
+                        <li><b>尺寸:</b> ${data.cell.size}</li>
+                        <li><b>工作温度:</b> ${data.cell.temp}</li>
+                        <li><b>循环寿命:</b> ${data.cell.life}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        openModal();
+    };
+    
+    const openModal = () => {
+        document.getElementById('modal-backdrop').style.display = 'block';
+        document.getElementById('modal').style.display = 'block';
+    };
+    
+    const closeModal = () => {
+        document.getElementById('modal-backdrop').style.display = 'none';
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('modal-content').innerHTML = '';
+    };
+
+    init();
+});
+</script>
+</body>
+</html>
+

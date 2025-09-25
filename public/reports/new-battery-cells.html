@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新一代动力电芯市场洞察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Muted Teal -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard. The structure prioritizes user-driven exploration over a static report format. It starts with a clear title, followed by a powerful filtering control panel allowing users to slice the data by key categories (form factor, chemistry, manufacturer). This immediately makes the data actionable. Below the filters, a dynamic table presents the detailed information, which is the core of the report. To the side (on larger screens) or below, interactive charts provide a visual summary of the filtered data. This dual view (table + charts) allows for both granular examination and high-level trend spotting. The user flow is: 1. See overview. 2. Apply filters to ask specific questions (e.g., "Show all large cylindrical cells"). 3. See the table and charts instantly update to answer the question. This structure was chosen because it transforms a flat data table into a dynamic analysis tool, perfectly suited for a marketing director's need to quickly identify trends and competitive landscapes. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Full dataset of new battery cells. Goal: Organize & Compare. Viz/Presentation: Interactive HTML Table. Interaction: Users can filter the table using the controls above. The table updates dynamically. Justification: A table is the clearest way to present detailed, multi-attribute data. JS filtering makes it powerful.
+        2. Report Info: Distribution of product form factors (pouch, cylindrical, etc.). Goal: Inform/Compare Proportions. Viz/Presentation: Donut Chart. Interaction: The chart updates based on the filtered data. Tooltips show exact counts. Justification: A donut chart is excellent for showing part-to-whole relationships for a small number of categories. Library: Chart.js (Canvas).
+        3. Report Info: Distribution of chemistry systems (LFP, Ternary, etc.). Goal: Compare Frequencies. Viz/Presentation: Bar Chart. Interaction: Updates with filters. Tooltips show exact counts. Justification: A bar chart is ideal for comparing the counts of different categories, making it easy to see which chemistry is most prevalent. Library: Chart.js (Canvas).
+        4. Report Info: Number of new products per manufacturer. Goal: Compare Manufacturer Activity. Viz/Presentation: Horizontal Bar Chart. Interaction: Updates with filters. Justification: A horizontal bar chart works well for comparing quantities across many categories (manufacturers), as the labels are easy to read. Library: Chart.js (Canvas).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background-color: #f8fafc;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            max-height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px;
+                max-height: 350px;
+            }
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #0d9488;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-700">新一代动力电芯市场洞察</h1>
+            <p class="mt-2 text-slate-500">交互式仪表板，助您分析最新电芯技术趋势</p>
+        </header>
+
+        <div class="bg-white p-4 rounded-xl shadow-md mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="font-semibold text-slate-600 text-sm">产品形态</label>
+                    <div id="formFactorFilters" class="flex flex-wrap gap-2 mt-2">
+                        <button data-filter="All" class="filter-btn active text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">全部</button>
+                        <button data-filter="软包" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">软包</button>
+                        <button data-filter="大圆柱" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">大圆柱</button>
+                        <button data-filter="固态电池" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">固态电池</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 text-sm">化学体系</label>
+                    <div id="chemistryFilters" class="flex flex-wrap gap-2 mt-2">
+                        <button data-filter="All" class="filter-btn active text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">全部</button>
+                        <button data-filter="LFP" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">LFP</button>
+                        <button data-filter="三元" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">三元</button>
+                        <button data-filter="高镍" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">高镍</button>
+                         <button data-filter="高压" class="filter-btn text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-full">高压</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="manufacturerFilter" class="font-semibold text-slate-600 text-sm">选择厂家</label>
+                    <select id="manufacturerFilter" class="mt-2 block w-full bg-slate-50 border border-slate-200 text-slate-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm">
+                        <option value="All">所有厂家</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div class="lg:col-span-3 bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-bold mb-4 text-slate-700">电芯产品数据库</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">厂家</th>
+                                <th scope="col" class="px-4 py-3">产品名称</th>
+                                <th scope="col" class="px-4 py-3">容量/电量</th>
+                                <th scope="col" class="px-4 py-3">产品形态</th>
+                                <th scope="col" class="px-4 py-3">化学体系</th>
+                                <th scope="col" class="px-4 py-3">应用车型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cellTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <aside class="lg:col-span-2 space-y-8">
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4">产品形态分布</h3>
+                    <p class="text-sm text-slate-500 mb-4">此图表展示了当前筛选结果中不同电池产品形态（如软包、大圆柱等）的数量占比。通过它，您可以快速了解不同技术路线在市场上的分布情况。</p>
+                    <div class="chart-container mx-auto" style="max-width: 320px;">
+                        <canvas id="formFactorChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4">化学体系应用分析</h3>
+                    <p class="text-sm text-slate-500 mb-4">该图表统计了不同化学体系（如LFP、三元、高镍）在筛选出的产品中的应用次数。这有助于您判断主流的化学体系发展方向和厂商的技术偏好。</p>
+                    <div class="chart-container">
+                        <canvas id="chemistryChart"></canvas>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        const cellData = [
+            { manufacturer: '宁德时代', name: '麒麟电池 V2', capacity: '140 kWh', formFactor: '软包', chemistry: '三元', vehicle: '理想 MEGA' },
+            { manufacturer: '宁德时代', name: '神行超充电池', capacity: '约75 kWh', formFactor: '软包', chemistry: 'LFP', vehicle: '阿维塔11, 奇瑞星途' },
+            { manufacturer: '比亚迪', name: '刀片电池 V2', capacity: '100 kWh', formFactor: '软包', chemistry: 'LFP', vehicle: '比亚迪 汉/唐' },
+            { manufacturer: '亿纬锂能', name: '4695 大圆柱', capacity: '23-25 Ah', formFactor: '大圆柱', chemistry: '高镍', vehicle: '宝马新世代平台' },
+            { manufacturer: '国轩高科', name: 'L600 启晨电池', capacity: '160 Wh/kg (Pack)', formFactor: '软包', chemistry: 'LFP', vehicle: '多个商用车平台' },
+            { manufacturer: '孚能科技', name: 'SPS大软包', capacity: '80-150 kWh', formFactor: '软包', chemistry: '高压', vehicle: '广汽 Aion V' },
+            { manufacturer: '远景动力', name: 'eVTOL 电芯', capacity: '450 Wh/kg', formFactor: '软包', chemistry: '高镍', vehicle: '多个eVTOL原型机' },
+            { manufacturer: '欣旺达', name: '闪充电池', capacity: '6C 充电', formFactor: '软包', chemistry: '高压', vehicle: '小鹏 G9' },
+            { manufacturer: 'LGES', name: '4680 大圆柱', capacity: '21 Ah', formFactor: '大圆柱', chemistry: '高镍', vehicle: '特斯拉 Cybertruck' },
+            { manufacturer: 'Samsung SDI', name: '全固态电池', capacity: '900 Wh/L', formFactor: '固态电池', chemistry: '高镍', vehicle: '2027年量产目标' },
+            { manufacturer: 'SK On', name: 'SF Battery (Super Fast)', capacity: '83 kWh', formFactor: '软包', chemistry: '高镍', vehicle: '现代 Ioniq 5' },
+            { manufacturer: '卫蓝新能源', name: '半固态电池', capacity: '150 kWh', formFactor: '固态电池', chemistry: '三元', vehicle: '蔚来 ET7' },
+            { manufacturer: '瑞浦兰钧', name: '问顶电池', capacity: '77-100 kWh', formFactor: '软包', chemistry: '三元', vehicle: '多个新势力车型' },
+            { manufacturer: '蜂巢能源', name: '龙鳞甲电池', capacity: '110 kWh', formFactor: '软包', chemistry: 'LFP', vehicle: '长城机甲龙' }
+        ];
+
+        let formFactorChart, chemistryChart;
+        let currentFilters = {
+            formFactor: 'All',
+            chemistry: 'All',
+            manufacturer: 'All'
+        };
+
+        const tableBody = document.getElementById('cellTableBody');
+        const formFactorFilters = document.getElementById('formFactorFilters');
+        const chemistryFilters = document.getElementById('chemistryFilters');
+        const manufacturerFilter = document.getElementById('manufacturerFilter');
+
+        function populateManufacturerFilter() {
+            const manufacturers = [...new Set(cellData.map(item => item.manufacturer))];
+            manufacturers.sort().forEach(m => {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = m;
+                manufacturerFilter.appendChild(option);
+            });
+        }
+
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-500">无匹配数据，请尝试调整筛选条件。</td></tr>`;
+                 return;
+            }
+            data.forEach(cell => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-slate-50';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-slate-900">${cell.manufacturer}</td>
+                    <td class="px-4 py-3">${cell.name}</td>
+                    <td class="px-4 py-3">${cell.capacity}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${getFormFactorColor(cell.formFactor)}">${cell.formFactor}</span></td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${getChemistryColor(cell.chemistry)}">${cell.chemistry}</span></td>
+                    <td class="px-4 py-3">${cell.vehicle}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function getFormFactorColor(formFactor) {
+            switch (formFactor) {
+                case '软包': return 'bg-blue-100 text-blue-800';
+                case '大圆柱': return 'bg-emerald-100 text-emerald-800';
+                case '固态电池': return 'bg-purple-100 text-purple-800';
+                default: return 'bg-slate-100 text-slate-800';
+            }
+        }
+
+        function getChemistryColor(chemistry) {
+            switch (chemistry) {
+                case 'LFP': return 'bg-green-100 text-green-800';
+                case '三元': return 'bg-orange-100 text-orange-800';
+                case '高镍': return 'bg-red-100 text-red-800';
+                case '高压': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-slate-100 text-slate-800';
+            }
+        }
+
+        function updateCharts(data) {
+            updateFormFactorChart(data);
+            updateChemistryChart(data);
+        }
+
+        function updateFormFactorChart(data) {
+            const ctx = document.getElementById('formFactorChart').getContext('2d');
+            const formFactorCounts = data.reduce((acc, cell) => {
+                acc[cell.formFactor] = (acc[cell.formFactor] || 0) + 1;
+                return acc;
+            }, {});
+
+            const chartData = {
+                labels: Object.keys(formFactorCounts),
+                datasets: [{
+                    data: Object.values(formFactorCounts),
+                    backgroundColor: ['#34d399', '#60a5fa', '#c084fc', '#fbbf24'],
+                    borderColor: '#f8fafc',
+                    borderWidth: 4,
+                    hoverOffset: 8
+                }]
+            };
+
+            if (formFactorChart) {
+                formFactorChart.data = chartData;
+                formFactorChart.update();
+            } else {
+                formFactorChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 20,
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed;
+                                        }
+                                        return label + '款';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateChemistryChart(data) {
+            const ctx = document.getElementById('chemistryChart').getContext('2d');
+            const chemistryCounts = data.reduce((acc, cell) => {
+                acc[cell.chemistry] = (acc[cell.chemistry] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const labels = Object.keys(chemistryCounts);
+            const values = Object.values(chemistryCounts);
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    label: '产品数量',
+                    data: values,
+                    backgroundColor: '#2dd4bf',
+                    borderRadius: 4,
+                    barThickness: 20
+                }]
+            };
+
+            if (chemistryChart) {
+                chemistryChart.data = chartData;
+                chemistryChart.update();
+            } else {
+                chemistryChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.raw} 款产品`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+
+        function applyFilters() {
+            const filteredData = cellData.filter(cell => {
+                const formFactorMatch = currentFilters.formFactor === 'All' || cell.formFactor === currentFilters.formFactor;
+                const chemistryMatch = currentFilters.chemistry === 'All' || cell.chemistry === currentFilters.chemistry;
+                const manufacturerMatch = currentFilters.manufacturer === 'All' || cell.manufacturer === currentFilters.manufacturer;
+                return formFactorMatch && chemistryMatch && manufacturerMatch;
+            });
+            renderTable(filteredData);
+            updateCharts(filteredData);
+        }
+
+        formFactorFilters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                currentFilters.formFactor = e.target.dataset.filter;
+                formFactorFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                applyFilters();
+            }
+        });
+
+        chemistryFilters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                currentFilters.chemistry = e.target.dataset.filter;
+                chemistryFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                applyFilters();
+            }
+        });
+
+        manufacturerFilter.addEventListener('change', (e) => {
+            currentFilters.manufacturer = e.target.value;
+            applyFilters();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateManufacturerFilter();
+            applyFilters();
+        });
+    </script>
+</body>
+</html>

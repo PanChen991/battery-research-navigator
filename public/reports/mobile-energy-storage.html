@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动储能行业调研报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is redesigned as a three-tab single-page dashboard. The main navigation switches between "客户需求洞察" (Customer Insights), "竞争格局分析" (Competitive Landscape), and "全球法规标准" (Global Regulations). This structure directly addresses the user request to remove the overview and focus on the three core data sets. Each section now uses a tabular format, which is optimal for presenting structured, multi-column data for easy comparison and analysis. Interactive filters are retained above each table to allow users to dynamically query and reduce the data sets, enhancing usability. This is a more direct and data-dense presentation than the previous card-based layout. -->
+    <!-- Visualization & Content Choices: 
+        1.  **Customer Insights**: Report Info: Detailed customer data. Goal: Organize for comparison. Presentation: Interactive Table. Interaction: Click region/type buttons to filter table rows. Justification: A table is the most effective way to display structured data with many attributes per entry, and filtering makes the large dataset manageable. Method: Vanilla JS DOM manipulation.
+        2.  **Competitor Analysis**: Report Info: Competitor data. Goal: Compare competitors directly. Presentation: Static Table. Interaction: None, all data is presented for a holistic view. Justification: A comprehensive table allows for easy side-by-side comparison of all key players on all relevant metrics, which is more effective than a one-by-one dropdown view. Method: Vanilla JS DOM manipulation.
+        3.  **Regulatory Standards**: Report Info: Regulations data. Goal: Organize for reference. Presentation: Interactive Table. Interaction: Filter by region to find relevant compliance information quickly. Justification: A filterable table is ideal for a reference tool, allowing users to quickly find the specific standards they need. Method: Vanilla JS DOM manipulation.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d3d3d;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-button.active {
+            border-bottom-color: #a58258;
+            color: #a58258;
+            font-weight: 500;
+        }
+        .filter-btn {
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active {
+            background-color: #a58258;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px; /* Force scroll on smaller screens */
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 0.9rem;
+            white-space: pre-wrap; /* Allow text to wrap but respect newlines */
+            word-break: break-word;
+        }
+        thead th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #5c4b37;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #fdfcfb;
+        }
+        tbody tr:hover {
+            background-color: #f0ebe5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-[#5c4b37]">移动储能行业市场洞察</h1>
+            <p class="text-lg text-gray-600 mt-2">一份关于客户需求、竞争格局及全球法规的综合分析报告</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button data-target="customers" class="nav-button active text-gray-600 py-4 px-6 block hover:text-[#a58258] focus:outline-none">客户需求洞察</button>
+            <button data-target="competitors" class="nav-button text-gray-600 py-4 px-6 block hover:text-[#a58258] focus:outline-none">竞争格局分析</button>
+            <button data-target="regulations" class="nav-button text-gray-600 py-4 px-6 block hover:text-[#a58258] focus:outline-none">全球法规标准</button>
+        </nav>
+
+        <main>
+            <div id="customers" class="page-content">
+                 <div class="text-center mb-12">
+                     <h2 class="text-3xl font-bold text-[#5c4b37] mb-2">客户需求深度剖析</h2>
+                     <p class="text-gray-500 max-w-3xl mx-auto">本表格详细列出了不同区域和应用场景下的客户需求、产品规格痛点。您可以使用下方的筛选器来探索特定市场的客户声音。</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                    <div class="w-full text-center mb-2">
+                        <span class="font-semibold text-gray-700 mr-4">区域:</span>
+                        <button class="filter-btn customer-region-filter bg-white py-2 px-4 rounded-full shadow-sm active" data-filter="all">全部</button>
+                        <button class="filter-btn customer-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="美国">美国</button>
+                        <button class="filter-btn customer-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="欧洲">欧洲</button>
+                        <button class="filter-btn customer-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="中国">中国</button>
+                        <button class="filter-btn customer-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="东南亚">东南亚</button>
+                    </div>
+                     <div class="w-full text-center">
+                        <span class="font-semibold text-gray-700 mr-4">类型:</span>
+                        <button class="filter-btn customer-type-filter bg-white py-2 px-4 rounded-full shadow-sm active" data-filter="all">全部</button>
+                        <button class="filter-btn customer-type-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="户外便携储能">户外便携</button>
+                        <button class="filter-btn customer-type-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="家庭应急备用电源">家庭应急</button>
+                        <button class="filter-btn customer-type-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="工商业移动式储能">工商业移动</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="customer-table">
+                        <thead>
+                            <tr>
+                                <th>客户清单</th>
+                                <th>客户区域</th>
+                                <th>储能类型</th>
+                                <th>电池包信息</th>
+                                <th>观点信息</th>
+                                <th>电芯信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="competitors" class="page-content hidden">
+                <div class="text-center mb-12">
+                     <h2 class="text-3xl font-bold text-[#5c4b37] mb-2">主要竞争对手分析</h2>
+                     <p class="text-gray-500 max-w-3xl mx-auto">此表格深入分析了行业内主要竞争者的产品布局、技术路线和市场策略，助您全面了解竞争格局。</p>
+                </div>
+                 <div class="table-container">
+                    <table id="competitor-table">
+                        <thead>
+                            <tr>
+                                <th>友商信息</th>
+                                <th>合作品牌</th>
+                                <th>移动储能类型</th>
+                                <th>电池类型</th>
+                                <th>电池包信息</th>
+                                <th>观点信息</th>
+                                <th>电芯信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="regulations" class="page-content hidden">
+                <div class="text-center mb-12">
+                     <h2 class="text-3xl font-bold text-[#5c4b37] mb-2">全球法规标准导航</h2>
+                     <p class="text-gray-500 max-w-3xl mx-auto">合规是产品出海的基石。本表格汇总了全球主要市场的移动储能产品相关法规标准，请使用筛选器查找特定市场的法规详情。</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                    <div class="text-center">
+                        <span class="font-semibold text-gray-700 mr-4">区域:</span>
+                        <button class="filter-btn regulation-region-filter bg-white py-2 px-4 rounded-full shadow-sm active" data-filter="all">全部</button>
+                        <button class="filter-btn regulation-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="美洲">美洲</button>
+                        <button class="filter-btn regulation-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="欧洲">欧洲</button>
+                        <button class="filter-btn regulation-region-filter bg-white py-2 px-4 rounded-full shadow-sm" data-filter="全球">全球</button>
+                    </div>
+                </div>
+                 <div class="table-container">
+                    <table id="regulation-table">
+                        <thead>
+                            <tr>
+                                <th>区域</th>
+                                <th>移动储能类型</th>
+                                <th>法规标准名称</th>
+                                <th>法规颁布时间</th>
+                                <th>法规特点说明</th>
+                                <th>法规背景说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const db = {
+            customers: [
+                {
+                    name: "美国户外探险家俱乐部", region: "美国", type: "户外便携储能",
+                    pack: "48V, 2kWh, 450x300x250mm, -10~45°C, 3000次, IP65",
+                    feedback: "痛点: 充电速度慢，太阳能板兼容性差。\n便利点: 多种输出接口。\n吐槽点: 太重了，不适合长途徒步。",
+                    cell: "LFP, 方壳, 3.2V, 20Ah, 148x95x27mm, -10~55°C, 4000次"
+                },
+                {
+                    name: "欧洲家庭能源解决方案", region: "欧洲", type: "家庭应急备用电源",
+                    pack: "51.2V, 5kWh, 600x400x200mm, -20~50°C, 6000次, IP54",
+                    feedback: "痛点: 与家用电网并网协议复杂。\n便利点: App智能控制，可设定峰谷电价。\n吐槽点: 安装需要专业电工，成本高。",
+                    cell: "LFP, 方壳, 3.2V, 100Ah, 174x129x48mm, -20~60°C, 8000次"
+                },
+                {
+                    name: "中国建筑工地", region: "中国", type: "工商业移动式储能",
+                    pack: "380V, 100kWh, 1500x1000x1200mm, -20~55°C, 5000次, IP67",
+                    feedback: "痛点: 高功率输出时温升明显。\n便利点: 轮式设计，移动方便。\n吐槽点: 噪音较大，影响周边环境。",
+                    cell: "LFP, 方壳, 3.2V, 280Ah, 207x174x72mm, -30~60°C, 6000次"
+                },
+                {
+                    name: "东南亚灾害救援组织", region: "东南亚", type: "家庭应急备用电源",
+                    pack: "24V, 1.5kWh, 400x250x220mm, 0~45°C, 1500次, IP21",
+                    feedback: "痛点: 防护等级低，潮湿环境下易损坏。\n便利点: 轻便，易于运输。\n吐槽点: 循环寿命短，更换频繁。",
+                    cell: "NCM, 圆柱(18650), 3.7V, 3.5Ah, 18x65mm, 0~50°C, 800次"
+                },
+                {
+                    name: "加州露营爱好者社群", region: "美国", type: "户外便携储能",
+                    pack: "25.6V, 1kWh, 350x200x200mm, -10~40°C, 2500次, IP54",
+                    feedback: "痛点: 逆变器效率不高，实际可用电量打折扣。\n便利点: 外观设计时尚。\n吐槽点: 液晶屏在阳光下看不清。",
+                    cell: "LFP, 软包, 3.2V, 50Ah, 145x100x12mm, -20~55°C, 3000次"
+                }
+            ],
+            competitors: [
+                {
+                    name: "CATL", partners: "Anker, Ecoflow", type: "户外便携储能, 家庭应急备用电源", batteryType: "LFP, NCM",
+                    pack: "提供定制化电池包方案，电量覆盖1-10kWh，高能量密度，长寿命设计",
+                    feedback: "优势: 品牌力强，技术领先，供应链稳定。\n劣势: 价格较高，中小客户支持响应慢。",
+                    cell: "LFP方壳(3.2V 100Ah/280Ah), NCM软包(3.7V 50Ah)"
+                },
+                {
+                    name: "正浩创新(Ecoflow)", partners: "自营品牌", type: "户外便携储能, 家庭应急备用电源", batteryType: "LFP, NCM",
+                    pack: "48V, 2-6kWh, 模块化设计, 独有X-Stream快充技术, 寿命3000-6000次, IP67",
+                    feedback: "优势: 充电速度行业领先，产品设计优秀，市场营销能力强。\n劣势: 价格昂贵，生态系统较封闭。",
+                    cell: "主要采用CATL等头部厂商电芯，电芯体系跟随主流技术"
+                },
+                {
+                    name: "华为数字能源", partners: "自营品牌", type: "家庭应急备用电源, 工商业移动式储能", batteryType: "LFP",
+                    pack: "51.2V, 5-30kWh, 模块化, 智能温控系统, 寿命达6000次以上, IP66",
+                    feedback: "优势: 强大的研发实力，结合逆变器和BMS的整体解决方案，品牌渠道优势。\n劣势: 产品线相对单一，主要集中在家储和工商业。",
+                    cell: "自研或与头部电芯厂合作，主推LFP方壳电芯"
+                },
+                {
+                    name: "BYD", partners: "自供及部分品牌合作", type: "家庭应急备用电源, 工商业移动式储能", batteryType: "LFP",
+                    pack: "刀片电池技术应用，高安全性，高集成度，电量5-200kWh, IP55",
+                    feedback: "优势: 垂直整合能力强，成本控制优秀，刀片电池安全性高。\n劣势: 消费级便携产品较少。",
+                    cell: "LFP刀片电池(单体电压3.2V, 容量90-200Ah)"
+                }
+            ],
+            regulations: [
+                {
+                    region: "美洲", type: "户外便携储能, 家庭应急备用电源", name: "UL 2743", time: "2016年",
+                    features: "针对便携式电源组的安全标准。重点考察电气安全、电池安全(需符合UL 2054或UL 62133)、外壳防护和功能安全。",
+                    background: "随着移动电源市场的快速增长，为规范产品安全，防止火灾、电击等危险而制定。"
+                },
+                {
+                    region: "欧洲", type: "户外便携储能, 家庭应急备用电源", name: "IEC 62133-2", time: "2017年",
+                    features: "针对含碱性或非酸性电解质的便携式二次电芯及电池的安全要求。涵盖了短路、过充、热滥用等关键测试。",
+                    background: "作为国际电工委员会标准，是进入欧洲市场以及许多其他国家市场的事实通行证。"
+                },
+                {
+                    region: "全球", type: "所有含锂电池的产品", name: "UN 38.3", time: "持续更新",
+                    features: "联合国关于危险货物运输的建议书，是锂电池航空、海运、陆运的强制性要求。包括高度模拟、温度测试、振动、冲击等8项测试。",
+                    background: "确保锂电池在运输过程中能够抵抗正常的振动、冲击和压力变化，防止发生危险。"
+                },
+                 {
+                    region: "美洲", type: "工商业移动式储能", name: "UL 9540", time: "2014年首次发布",
+                    features: "储能系统和设备安全标准。评估整个储能系统，包括电池、逆变器、控制系统等的协同安全性，特别是热失控蔓延的预防。",
+                    background: "为规范大型储能系统的安装和使用安全，应对日益增长的工商业和电网级储能需求。"
+                }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page-content');
+            
+            const customerTableBody = document.querySelector('#customer-table tbody');
+            const customerRegionFilters = document.querySelectorAll('.customer-region-filter');
+            const customerTypeFilters = document.querySelectorAll('.customer-type-filter');
+
+            const competitorTableBody = document.querySelector('#competitor-table tbody');
+
+            const regulationTableBody = document.querySelector('#regulation-table tbody');
+            const regulationRegionFilters = document.querySelectorAll('.regulation-region-filter');
+
+            let currentCustomerRegion = 'all';
+            let currentCustomerType = 'all';
+            let currentRegulationRegion = 'all';
+
+            function switchPage(targetId) {
+                pages.forEach(page => {
+                    page.classList.add('hidden');
+                });
+                document.getElementById(targetId).classList.remove('hidden');
+
+                navButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.target === targetId) {
+                        button.classList.add('active');
+                    }
+                });
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchPage(button.dataset.target);
+                });
+            });
+
+            function renderCustomers() {
+                customerTableBody.innerHTML = '';
+                const filteredCustomers = db.customers.filter(customer => 
+                    (currentCustomerRegion === 'all' || customer.region === currentCustomerRegion) &&
+                    (currentCustomerType === 'all' || customer.type === currentCustomerType)
+                );
+
+                if (filteredCustomers.length === 0) {
+                    customerTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500">没有找到符合条件的客户信息。</td></tr>`;
+                    return;
+                }
+                
+                filteredCustomers.forEach(customer => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${customer.name}</td>
+                        <td>${customer.region}</td>
+                        <td>${customer.type}</td>
+                        <td>${customer.pack}</td>
+                        <td>${customer.feedback}</td>
+                        <td>${customer.cell}</td>
+                    `;
+                    customerTableBody.appendChild(row);
+                });
+            }
+            
+            customerRegionFilters.forEach(button => {
+                button.addEventListener('click', () => {
+                    customerRegionFilters.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentCustomerRegion = button.dataset.filter;
+                    renderCustomers();
+                });
+            });
+
+            customerTypeFilters.forEach(button => {
+                button.addEventListener('click', () => {
+                    customerTypeFilters.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentCustomerType = button.dataset.filter;
+                    renderCustomers();
+                });
+            });
+
+            function renderCompetitors() {
+                competitorTableBody.innerHTML = '';
+                db.competitors.forEach(competitor => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${competitor.name}</td>
+                        <td>${competitor.partners}</td>
+                        <td>${competitor.type}</td>
+                        <td>${competitor.batteryType}</td>
+                        <td>${competitor.pack}</td>
+                        <td>${competitor.feedback}</td>
+                        <td>${competitor.cell}</td>
+                    `;
+                    competitorTableBody.appendChild(row);
+                });
+            }
+
+
+            function renderRegulations() {
+                regulationTableBody.innerHTML = '';
+                const filteredRegulations = db.regulations.filter(r => 
+                    currentRegulationRegion === 'all' || r.region === currentRegulationRegion
+                );
+
+                if (filteredRegulations.length === 0) {
+                     regulationTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500">没有找到符合条件的法规信息。</td></tr>`;
+                    return;
+                }
+
+                filteredRegulations.forEach(reg => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${reg.region}</td>
+                        <td>${reg.type}</td>
+                        <td>${reg.name}</td>
+                        <td>${reg.time}</td>
+                        <td>${reg.features}</td>
+                        <td>${reg.background}</td>
+                    `;
+                    regulationTableBody.appendChild(row);
+                });
+            }
+
+             regulationRegionFilters.forEach(button => {
+                button.addEventListener('click', () => {
+                    regulationRegionFilters.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentRegulationRegion = button.dataset.filter;
+                    renderRegulations();
+                });
+            });
+
+            // Initial Render
+            switchPage('customers');
+            renderCustomers();
+            renderCompetitors();
+            renderRegulations();
+        });
+    </script>
+</body>
+</html>
+
