@@ -48,6 +48,18 @@
 </head>
 <body class="antialiased">
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- 返回按钮 -->
+        <div class="mb-4">
+            <button onclick="window.close(); if(window.opener){window.opener.focus();} else {window.location.href='/'}" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回主页
+            </button>
+        </div>
+        
         <header class="text-center mb-10">
             <h1 class="text-3xl md:text-4xl font-bold text-zinc-800">全球主流电池公司电芯焊接技术分析平台</h1>
             <p class="mt-2 text-lg text-zinc-600">一份关于电芯Busbar焊接技术的交互式调研报告</p>

@@ -50,6 +50,18 @@
 </head>
 <body class="antialiased">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <!-- 返回按钮 -->
+        <div class="mb-4">
+            <button onclick="window.close(); if(window.opener){window.opener.focus();} else {window.location.href='/'}" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回主页
+            </button>
+        </div>
+        
         <header class="text-center mb-12">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">负极硅碳合浆产气技术对比表</h1>
             <p class="text-lg text-gray-600 max-w-3xl mx-auto">一个更全面的可交互数据表格，覆盖全球主要电池制造商的技术方案</p>
