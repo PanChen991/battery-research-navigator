@@ -14,7 +14,7 @@ export const batteryReports: Report[] = [
     title: "eVTOL产品信息调研",
     category: "应用领域",
     description: "全球电动垂直起降飞行器市场、政策、动态与供应链分析",
-    lastUpdated: "2024-03-20",
+    lastUpdated: "2025-09-25",
     htmlFile: "evtol-research.html"
   },
   {
@@ -22,7 +22,7 @@ export const batteryReports: Report[] = [
     title: "低速车行业调研",
     category: "应用领域",
     description: "低速电动车电池市场洞察，包括客户需求、竞争格局和法规标准",
-    lastUpdated: "2024-03-19",
+    lastUpdated: "2025-09-25",
     htmlFile: "low-speed-vehicle.html"
   },
   {
@@ -30,7 +30,7 @@ export const batteryReports: Report[] = [
     title: "移动储能行业调研",
     category: "应用领域", 
     description: "移动储能行业的客户需求洞察、竞争格局分析和全球法规标准",
-    lastUpdated: "2024-03-18",
+    lastUpdated: "2025-09-25",
     htmlFile: "mobile-energy-storage.html"
   },
   // 电芯技术
@@ -39,7 +39,7 @@ export const batteryReports: Report[] = [
     title: "新发布电芯技术分析",
     category: "电芯技术",
     description: "新一代动力电芯市场洞察，涵盖不同形状、化学体系和制造商的最新产品",
-    lastUpdated: "2024-03-17",
+    lastUpdated: "2025-09-25",
     htmlFile: "new-battery-cells.html"
   },
   {
@@ -47,7 +47,7 @@ export const batteryReports: Report[] = [
     title: "新电池包调研分析",
     category: "电芯技术",
     description: "动力电池技术与市场洞察，汇集全球主要厂商的最新电池包技术信息",
-    lastUpdated: "2024-03-16",
+    lastUpdated: "2025-09-25",
     htmlFile: "new-battery-packs.html"
   },
   {
@@ -55,7 +55,7 @@ export const batteryReports: Report[] = [
     title: "竞品电芯安全技术进展",
     category: "电芯技术",
     description: "电动汽车电芯安全技术洞察，探索热失控防护、结构创新与无热蔓延技术",
-    lastUpdated: "2024-03-15",
+    lastUpdated: "2025-09-25",
     htmlFile: "cell-safety-tech.html"
   },
   {
@@ -63,7 +63,7 @@ export const batteryReports: Report[] = [
     title: "电池拆解分析数据库",
     category: "电芯技术",
     description: "综合性电池拆解分析报告，包含多家制造商的详细技术数据和性能对比",
-    lastUpdated: "2024-03-14",
+    lastUpdated: "2025-09-25",
     htmlFile: "battery-teardown.html"
   },
   {
@@ -71,7 +71,7 @@ export const batteryReports: Report[] = [
     title: "铁锂圆柱46系列电芯市场调研",
     category: "电芯技术",
     description: "近5年铁锂圆柱46系列电芯市场调研，包含主要厂商的技术参数和市场信息",
-    lastUpdated: "2024-03-13",
+    lastUpdated: "2025-09-25",
     htmlFile: "battery-info-progress.html"
   },
   {
@@ -79,7 +79,7 @@ export const batteryReports: Report[] = [
     title: "全球动力电池电芯技术设计",
     category: "电芯设计",
     description: "全球动力电池电芯技术与供应链分析看板，涵盖主要制造商的设计方案",
-    lastUpdated: "2024-03-05",
+    lastUpdated: "2025-09-25",
     htmlFile: "cell-design.html"
   },
   // 测试技术
@@ -88,7 +88,7 @@ export const batteryReports: Report[] = [
     title: "测试方案调研",
     category: "测试技术",
     description: "主流电池制造商电芯测试方案概览，涵盖EVE、CATL、BYD等领先企业的测试解决方案",
-    lastUpdated: "2024-03-12",
+    lastUpdated: "2025-09-25",
     htmlFile: "test-solution-research.html"
   },
   {
@@ -96,7 +96,7 @@ export const batteryReports: Report[] = [
     title: "测试工装调研",
     category: "测试技术",
     description: "主流电池公司液冷测试方案调研，聚焦行业领先企业的液冷散热工装及测试方案",
-    lastUpdated: "2024-03-11",
+    lastUpdated: "2025-09-25",
     htmlFile: "test-equipment-research.html"
   },
   {
@@ -104,7 +104,7 @@ export const batteryReports: Report[] = [
     title: "测试焊接调研",
     category: "测试技术",
     description: "电池电芯焊接技术分析报告，涵盖各大厂商的焊接方式、材料选择和技术参数",
-    lastUpdated: "2024-03-10",
+    lastUpdated: "2025-09-25",
     htmlFile: "test-welding-research.html"
   },
   // 工艺技术
@@ -113,7 +113,7 @@ export const batteryReports: Report[] = [
     title: "干法电极工艺技术",
     category: "工艺技术",
     description: "全球干法电极技术研究报告，对比分析各公司的工艺路线和技术优势",
-    lastUpdated: "2024-03-09",
+    lastUpdated: "2025-09-25",
     htmlFile: "dry-electrode-process.html"
   },
   {
@@ -121,7 +121,7 @@ export const batteryReports: Report[] = [
     title: "负极硅碳合浆产气技术",
     category: "工艺技术",
     description: "负极硅碳合浆产气技术对比分析，涵盖全球主要制造商的解决方案",
-    lastUpdated: "2024-03-08",
+    lastUpdated: "2025-09-25",
     htmlFile: "silicon-carbon-slurry.html"
   },
   {
@@ -129,7 +129,7 @@ export const batteryReports: Report[] = [
     title: "双层涂布工艺技术",
     category: "工艺技术",
     description: "全球电池双层涂布技术对比报告，分析不同涂布策略和检测方法",
-    lastUpdated: "2024-03-07",
+    lastUpdated: "2025-09-25",
     htmlFile: "double-layer-coating.html"
   },
   {
@@ -137,7 +137,7 @@ export const batteryReports: Report[] = [
     title: "UV喷涂工艺技术",
     category: "工艺技术",
     description: "全球电池行业UV喷涂技术对标报告，涵盖主要厂商的UV涂层应用情况",
-    lastUpdated: "2024-03-06",
+    lastUpdated: "2025-09-25",
     htmlFile: "uv-coating.html"
   },
   {
@@ -145,7 +145,7 @@ export const batteryReports: Report[] = [
     title: "三元电芯水分制定标准",
     category: "工艺技术",
     description: "三元电芯水分标准技术对标分析，包含各厂商的水分控制技术和标准",
-    lastUpdated: "2024-03-04",
+    lastUpdated: "2025-09-25",
     htmlFile: "ternary-cell-moisture-standard.html"
   },
   {
@@ -153,7 +153,7 @@ export const batteryReports: Report[] = [
     title: "46系圆柱电池卷绕工艺",
     category: "工艺技术",
     description: "主流电池厂及设备商卷绕卷针尺寸与结构调研分析",
-    lastUpdated: "2024-03-03",
+    lastUpdated: "2025-09-25",
     htmlFile: "winding-needle-structure.html"
   },
   {
@@ -161,7 +161,7 @@ export const batteryReports: Report[] = [
     title: "46系圆柱电池切卷打皱问题",
     category: "工艺技术",
     description: "电芯制造过程中正负极片及隔膜打皱问题的分析和解决方案",
-    lastUpdated: "2024-03-02",
+    lastUpdated: "2025-09-25",
     htmlFile: "wrinkling-process.html"
   },
   {
@@ -169,7 +169,7 @@ export const batteryReports: Report[] = [
     title: "46系列圆柱电池激光工艺",
     category: "工艺技术",
     description: "主流厂商在全极耳工艺中的激光应用方案技术对比",
-    lastUpdated: "2024-03-01",
+    lastUpdated: "2025-09-25",
     htmlFile: "laser-cutting-dust-removal.html"
   },
   {
@@ -177,7 +177,7 @@ export const batteryReports: Report[] = [
     title: "46系圆柱电池注液工艺",
     category: "工艺技术",
     description: "电池制造商的注液工艺技术分析，包含详细的工艺参数和流程",
-    lastUpdated: "2024-02-28",
+    lastUpdated: "2025-09-25",
     htmlFile: "electrolyte-injection.html"
   },
   {
@@ -185,7 +185,7 @@ export const batteryReports: Report[] = [
     title: "46系圆柱电池焊接工艺",
     category: "工艺技术",
     description: "电池焊接工艺技术分析平台，涵盖各厂商的焊接方案和技术参数",
-    lastUpdated: "2024-02-27",
+    lastUpdated: "2025-09-25",
     htmlFile: "welding-process.html"
   },
   // 材料技术
@@ -194,7 +194,7 @@ export const batteryReports: Report[] = [
     title: "动力电池正极材料",
     category: "材料技术",
     description: "动力电池正极材料市场洞察，包含主要材料类型和制造商应用情况",
-    lastUpdated: "2024-02-26",
+    lastUpdated: "2025-09-25",
     htmlFile: "cathode-materials.html"
   },
   {
@@ -202,7 +202,7 @@ export const batteryReports: Report[] = [
     title: "石墨负极材料",
     category: "材料技术",
     description: "石墨负极材料技术分析报告，涵盖材料特性和供应商信息",
-    lastUpdated: "2024-02-25",
+    lastUpdated: "2025-09-25",
     htmlFile: "graphite-anode.html"
   },
   {
@@ -210,7 +210,7 @@ export const batteryReports: Report[] = [
     title: "硅负极材料技术",
     category: "材料技术",
     description: "硅负极材料技术与应用调研，包含材料特性和制造商应用分析",
-    lastUpdated: "2024-02-24",
+    lastUpdated: "2025-09-25",
     htmlFile: "silicon-anode.html"
   },
   {
@@ -218,7 +218,7 @@ export const batteryReports: Report[] = [
     title: "电解液技术情报",
     category: "材料技术",
     description: "电解液技术情报交互数据库，涵盖电解液特性和厂商应用调研",
-    lastUpdated: "2024-02-23",
+    lastUpdated: "2025-09-25",
     htmlFile: "electrolyte-tech.html"
   },
   {
@@ -226,7 +226,7 @@ export const batteryReports: Report[] = [
     title: "锂电池导电剂",
     category: "材料技术",
     description: "锂电池导电剂市场调研分析，包含材料特性和厂商应用情况",
-    lastUpdated: "2024-02-22",
+    lastUpdated: "2025-09-25",
     htmlFile: "conductive-agent.html"
   },
   {
@@ -234,7 +234,7 @@ export const batteryReports: Report[] = [
     title: "动力电池粘结剂",
     category: "材料技术",
     description: "动力电池粘结剂市场与技术洞察，涵盖材料类型和制造商分析",
-    lastUpdated: "2024-02-21",
+    lastUpdated: "2025-09-25",
     htmlFile: "binder-materials.html"
   },
   {
@@ -242,7 +242,7 @@ export const batteryReports: Report[] = [
     title: "电池隔膜技术",
     category: "材料技术",
     description: "电池隔膜技术与市场洞察，包含材料特性和制造商调研信息",
-    lastUpdated: "2024-02-20",
+    lastUpdated: "2025-09-25",
     htmlFile: "separator-materials.html"
   },
   {
@@ -250,7 +250,7 @@ export const batteryReports: Report[] = [
     title: "动力电池胶带技术",
     category: "材料技术",
     description: "动力电池胶带技术与市场调研报告，涵盖胶带类型和供应商分析",
-    lastUpdated: "2024-02-19",
+    lastUpdated: "2025-09-25",
     htmlFile: "adhesive-tape.html"
   },
   {
@@ -258,7 +258,7 @@ export const batteryReports: Report[] = [
     title: "电池箔材技术",
     category: "材料技术",
     description: "电池箔材技术与市场洞察平台，包含材料特性和厂商调研",
-    lastUpdated: "2024-02-18",
+    lastUpdated: "2025-09-25",
     htmlFile: "foil-materials.html"
   },
   {
@@ -266,7 +266,7 @@ export const batteryReports: Report[] = [
     title: "电芯绝缘胶技术",
     category: "材料技术",
     description: "电芯绝缘胶技术与市场调研，涵盖材料特性和供应商信息",
-    lastUpdated: "2024-02-17",
+    lastUpdated: "2025-09-25",
     htmlFile: "insulation-adhesive.html"
   }
 ];
